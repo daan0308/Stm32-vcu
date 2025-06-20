@@ -103,6 +103,8 @@
 #include "kangoobms.h"
 #include "OutlanderCanHeater.h"
 #include "OutlanderHeartBeat.h"
+#include "imd.h"
+#include "benderimd.h"
 
 #define PRECHARGE_TIMEOUT 5  //5s
 
@@ -190,6 +192,9 @@ static DCDC DCDCnone;
 static TeslaDCDC DCDCTesla;
 static BMS* selectedBMS = &BMSnone;
 static DCDC* selectedDCDC = &DCDCnone;
+static IMD IMDNone;
+static BenderIMD IMDBender;
+static IMD* selectedIMD = &IMDNone;
 static Can_OBD2 canOBD2;
 static Shifter shifterNone;
 static RearOutlanderInverter rearoutlanderInv;
@@ -382,6 +387,7 @@ static void Ms100Task(void)
     selectedDCDC->Task100Ms();
     selectedShifter->Task100Ms();
     selectedHeater->Task100Ms();
+    selectedIMD->Task100Ms();
     canMap->SendAll();
 
     if(OutlanderCAN == true)
@@ -983,6 +989,38 @@ static void UpdateShifter()
 }
 
 
+static void UpdateIMD()
+{
+    selectedIMD->DeInit();
+    switch (Param::GetInt(Param::IMD_Type))
+    {
+        case IMDTypes::NOIMD:
+            selectedIMD = &IMDNone;
+            break;
+
+        case IMDTypes::BENDER_IMD:
+            selectedIMD = &IMDBender;
+
+            // Force analog pins to the correct once when selecting IMD
+            Param::SetInt(Param::GPA1Func, IOMatrix::analoguepinfuncs::IMD_PWM);
+            Param::SetInt(Param::GPA2Func, IOMatrix::analoguepinfuncs::IMD_OK);
+
+            // Start timer for measuring the frequency
+            IMDBender.StartTimer();
+
+            break;
+        default:
+            // Default to no imd
+            selectedIMD = &IMDNone;
+            break;
+    }
+
+    //This will call SetCanFilters() via the Clear Callback
+    canInterface[0]->ClearUserMessages();
+    canInterface[1]->ClearUserMessages();
+}
+
+
 //Whenever the user clears mapped can messages or changes the
 //CAN interface of a device, this will be called by the CanHardware module
 static void SetCanFilters()
@@ -1044,6 +1082,9 @@ void Param::Change(Param::PARAM_NUM paramNum)
         break;
     case Param::GearLvr:
         UpdateShifter();
+        break;
+    case Param::IMD_Type:
+        UpdateIMD();
         break;
     case Param::InverterCan:
     case Param::VehicleCan:
