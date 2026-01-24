@@ -246,7 +246,7 @@
     VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) \
     VALUE_ENTRY(ImdRes,        "kOhm",              2108 ) \
     VALUE_ENTRY(ImdState,      IMDSTATE,            2109 ) \
-    VALUE_ENTRY(ImdFault,      "A",               2110 ) \
+    VALUE_ENTRY(ImdFault,      ONOFF,               2110 ) \
 //Next value Id: 2111
 
 //Dead params
