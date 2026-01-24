@@ -1323,6 +1323,7 @@ extern "C" int main(void)
     UpdateHeater();
     UpdateDCDC();
     UpdateShifter();
+    UpdateIMD();
 
     Stm32Scheduler s(TIM4); //We never exit main so it's ok to put it on stack
     scheduler = &s;
