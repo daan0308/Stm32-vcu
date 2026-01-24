@@ -49,7 +49,7 @@
     PARAM_ENTRY(CAT_SETUP,     DCDCCan,      CAN_DEV,  0,      1,      1,      107 ) \
     PARAM_ENTRY(CAT_SETUP,     HeaterCan,    CAN_DEV,  0,      1,      1,      138 ) \
     PARAM_ENTRY(CAT_SETUP,     MotActive,    MotorsAct,0,      3,      0,      129 )\
-    PARAM_ENTRY(CAT_SETUP,     IMD_Type,     IMDTYPE,  0,      1,      0,      143) \
+    PARAM_ENTRY(CAT_SETUP,     IMD_Type,     IMDTYPE,  0,      2,      0,      143) \
     PARAM_ENTRY(CAT_THROTTLE,  potmin,      "dig",     0,      4095,   0,      7  ) \
     PARAM_ENTRY(CAT_THROTTLE,  potmax,      "dig",     0,      4095,   4095,   8  ) \
     PARAM_ENTRY(CAT_THROTTLE,  pot2min,     "dig",     0,      4095,   4095,   9  ) \
@@ -246,7 +246,7 @@
     VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) \
     VALUE_ENTRY(ImdRes,        "kOhm",              2108 ) \
     VALUE_ENTRY(ImdState,      IMDSTATE,            2109 ) \
-    VALUE_ENTRY(ImdFault,      ONOFF,               2110 ) \
+    VALUE_ENTRY(ImdFault,      "A",               2110 ) \
 //Next value Id: 2111
 
 //Dead params
@@ -264,7 +264,7 @@
 #define APINFUNCS    "0=None, 1=ProxPilot, 2=BrakeVacSensor, 3=IMD_Pwm, 4=IMD_Ok"
 #define SHIFTERS     "0=None, 1=BMW_F30, 2=JLR_G1, 3=JLR_G2, 4=BMW_E65"
 #define SHNTYPE      "0=None, 1=ISA, 2=SBOX, 3=VAG"
-#define IMDTYPE      "0=None, 1=Bender"
+#define IMDTYPE      "0=None, 1=Bender, 2=SimpleBender"
 #define DMODES       "0=CLOSED, 1=OPEN, 2=ERROR, 3=INVALID"
 #define POTMODES     "0=SingleChannel, 1=DualChannel"
 #define BTNSWITCH    "0=Button, 1=Switch, 2=CAN"
@@ -427,7 +427,8 @@ enum ShifterModes
 enum IMDTypes
 {
     NOIMD = 0,
-    BENDER_IMD = 1
+    BENDER_IMD = 1,
+    SIMPLE_BENDER_IMD = 2
 };
 
 enum ChargeControl

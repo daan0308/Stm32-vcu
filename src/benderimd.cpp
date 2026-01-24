@@ -26,9 +26,9 @@ void BenderIMD::DeInit() {
     StopTimer();
 }
 
+// At the moment the stm32_vcu board does not support PWM inputs. 
+// Please use the SimpleIMD implementation for the bender, that does not expose the actual values...
 void BenderIMD::Task100Ms() {
-    bool ok = gpio_get(GPIOC, GPIO3);
-
     uint16_t period = TIM_CCR3(TIM3);
     uint16_t high_time = TIM_CCR4(TIM3);
 
@@ -65,12 +65,9 @@ void BenderIMD::Task100Ms() {
 
             // If signal is high, there is a short between the 24V supply and the output.
             // If the signal is low, there is a short between the ground and the output.
-            if (!ok) {
-                state = IMD_OFF;
-            } else {
-                state = IMD_MEASUREMENT_ERROR;
-            }
-
+            // Either way there is a measurement error
+            state = IMD_MEASUREMENT_ERROR;
+            
             break;
         case 10:
 
@@ -98,9 +95,12 @@ void BenderIMD::Task100Ms() {
         case 30:
 
             // Speed start measurement, only indicates good (DC of 5 to 10%) or bad (DC of 90 to 95%).
-            // I assume that the boundary of being good or bad is at 200kOhm (IMD specific)
-            if ((duty_cycle >= 0.05 && duty_cycle <= 0.10) || (duty_cycle >= 0.90 && duty_cycle <= 0.95)) {
+            // I assume that the boundary of being good or bad is at 100kOhm (IMD specific)
+            if (duty_cycle >= 0.05 && duty_cycle <= 0.10) {
                 state = IMD_SPEED_MEASUREMENT;
+            }
+            else if (duty_cycle >= 0.90 && duty_cycle <= 0.95) {
+                state = IMD_EARTH_FAULT;
             }
             else {
                 state = IMD_MEASUREMENT_ERROR;
@@ -138,7 +138,6 @@ void BenderIMD::Task100Ms() {
     // If there is and measurement error, just wait on the next measurement (100ms at 10Hz)
     if (state == IMD_MEASUREMENT_ERROR) {
         imd_state = state;
-        return;
     }
 
     // Calculate the resistance using the formula from the datasheet of the IMD, if the measured data both is correct
@@ -151,8 +150,8 @@ void BenderIMD::Task100Ms() {
         }
     }
 
-    // If there is a speed measurment, fault is determined differently, also when resistance is earth fault or below 80, set flag
-    if ((state == IMD_SPEED_MEASUREMENT && duty_cycle >= 0.9) || state == IMD_EARTH_FAULT || resistance < 80) {
+    // If there is a speed measurment, fault is determined differently, also when resistance is earth fault or below 100, set flag
+    if ((state == IMD_SPEED_MEASUREMENT && duty_cycle >= 0.9) || state == IMD_EARTH_FAULT || resistance < 100) {
         fault_flag = 1;
     }
 

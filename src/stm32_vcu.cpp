@@ -105,6 +105,7 @@
 #include "OutlanderHeartBeat.h"
 #include "imd.h"
 #include "benderimd.h"
+#include "benderimdsimple.h"
 
 #define PRECHARGE_TIMEOUT 5  //5s
 
@@ -194,6 +195,7 @@ static BMS* selectedBMS = &BMSnone;
 static DCDC* selectedDCDC = &DCDCnone;
 static IMD IMDNone;
 static BenderIMD IMDBender;
+static BenderIMDSimple IMDBenderSimple;
 static IMD* selectedIMD = &IMDNone;
 static Can_OBD2 canOBD2;
 static Shifter shifterNone;
@@ -1008,6 +1010,10 @@ static void UpdateIMD()
             // Start timer for measuring the frequency
             IMDBender.StartTimer();
 
+            break;
+
+        case IMDTypes::SIMPLE_BENDER_IMD:
+            selectedIMD = &IMDBenderSimple;
             break;
         default:
             // Default to no imd
