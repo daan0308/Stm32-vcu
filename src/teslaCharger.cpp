@@ -27,7 +27,6 @@ static uint8_t CurReq = 0;
 static uint16_t HVvolts=0;
 static uint16_t HVspnt=0;
 static uint16_t HVpwr=0;
-static uint16_t calcBMSpwr=0;
 
 
 void teslaCharger::SetCanInterface(CanHardware* c)
@@ -41,23 +40,29 @@ void teslaCharger::DecodeCAN(int id, uint32_t data[8])
    uint8_t* bytes = (uint8_t*)data;
    if (id == 0x109)
    {
-       if(bytes[5]==0x05) HVreq=true;
+       if(bytes[5]==0x05) HVreq=true; // This should become high when the PP wire gets plugged in and the charger is enabled
        if(bytes[5]==0x00) HVreq=false;
    }
 }
 
 void teslaCharger::Task100Ms()
 {
-   uint8_t bytes[8];
+    HVvolts=Param::GetInt(Param::udc);
+    HVspnt=Param::GetInt(Param::Voltspnt);
+    HVpwr=Param::GetInt(Param::Pwrspnt);
 
-   HVvolts=Param::GetInt(Param::udc);
-   HVspnt=Param::GetInt(Param::Voltspnt);
-   HVpwr=Param::GetInt(Param::Pwrspnt);
-   calcBMSpwr=(HVvolts * Param::GetInt(Param::BMS_ChargeLim));//BMS charge current limit but needs to be power for most AC charger types.
-   HVpwr=MIN(HVpwr,calcBMSpwr);
+    CurReq = HVpwr / HVvolts; // Calculate requested current without limit
 
-    CurReq = HVpwr / HVvolts; // Calculate requested current
+    // Time to limit the charge current...
+    CurReq = MIN(CurReq, Param::GetInt(Param::BMS_ChargeLim)); // Take the minimal current if the BMS gives a max charge limit
     CurReq = MIN(CurReq, 45); // Max allowed is 45A
+
+    int opmode = Param::GetInt(Param::opmode);
+    if (opmode != MOD_CHARGE) {
+        CurReq = 0; // If the contactors have not closed and car is not ready to charge, no current is allowed to flow out
+    }
+
+    uint8_t bytes[8];
     bytes[0] = 0x00;
     bytes[1] = (HVspnt&0xFF); // HV voltage lowbyte
     bytes[2] = ((HVspnt&0xFF00)>>8); // HV voltage highbyte
@@ -71,6 +76,8 @@ void teslaCharger::Task100Ms()
 
 bool teslaCharger::ControlCharge(bool RunCh, bool ACReq)
 {
-   if(HVreq) return true;
-   if(!HVreq) return false;
+    ChRun = RunCh && ACReq; // Enable the charger if there is a AC request, since this charger is an OBC, it only supports AC charging
+
+    if(HVreq) return true; // If the charger requests the car to get into charge_mod return true
+    else return false;
 }
