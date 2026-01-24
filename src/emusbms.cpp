@@ -31,10 +31,10 @@
 void EmusBMS::SetCanInterface(CanHardware* c)
 {
    can = c;
-   can->RegisterUserMessage(0x19B50001); // Extended ID for min and max cell voltages
-   can->RegisterUserMessage(0x19B50008); // Extended ID for min and max cell temperatures
-   can->RegisterUserMessage(0x19B50600); // Extended ID for energy parameters (kWh)
-   can->RegisterUserMessage(0x19B50500); // Extended ID for SoC
+   can->RegisterUserMessage(0x301); // Extended ID for min and max cell voltages
+   can->RegisterUserMessage(0x308); // Extended ID for min and max cell temperatures
+   can->RegisterUserMessage(0x306); // Extended ID for energy parameters (kWh)
+   can->RegisterUserMessage(0x305); // Extended ID for SoC
 }
 
 bool EmusBMS::BMSDataValid() {
@@ -69,22 +69,22 @@ float EmusBMS::MaxChargeCurrent()
 // Process voltage and temperature message from SimpBMS.
 void EmusBMS::DecodeCAN(int id, uint8_t *data)
 {
-   if (id == 0x19B50001)
+   if (id == 0x301)
    {
        minCellV = (float) (data[0] / 100.0f) + 2.00f;
        maxCellV = (float) (data[1] / 100.0f) + 2.00f;
    }
-   else if (id == 0x19B50008)
+   else if (id == 0x308)
    {
         minTempC = (float) (data[0]) - 100.0f;
         maxTempC = (float) (data[1]) - 100.0f;
    }
-   else if (id == 0x19B50600)
+   else if (id == 0x306)
    {
-       remainingKWh = (float) ((data[2] << 8) + (data[3]) / 10.0f);
+       remainingKWh = (float) ((data[2] << 8) + (data[3]) / 100.0f);
    }
-   else if (id == 0x19B50500) {
-       stateOfCharge = (float) ((data[5] << 8) + (data[6]) / 100.0f);
+   else if (id == 0x305) {
+       stateOfCharge = (data[5]);
 
        // Reset timeout counter to the full timeout value
        timeoutCounter = Param::GetInt(Param::BMS_Timeout) * 10;
@@ -115,8 +115,8 @@ void EmusBMS::Task100Ms() {
 
     // Request data from BMS
     uint8_t data[8] = {0};
-    can->Send((uint32_t) 0x19B50001, data, (uint8_t) 0);
-    can->Send((uint32_t) 0x19B50002, data, (uint8_t) 0);
-    can->Send((uint32_t) 0x19B50500, data, (uint8_t) 0);
-    can->Send((uint32_t) 0x19B50600, data, (uint8_t) 0);
+    can->Send((uint32_t) 0x301, data, (uint8_t) 0);
+    can->Send((uint32_t) 0x302, data, (uint8_t) 0);
+    can->Send((uint32_t) 0x305, data, (uint8_t) 0);
+    can->Send((uint32_t) 0x306, data, (uint8_t) 0);
 }
