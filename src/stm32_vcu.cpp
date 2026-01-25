@@ -1003,10 +1003,6 @@ static void UpdateIMD()
         case IMDTypes::BENDER_IMD:
             selectedIMD = &IMDBender;
 
-            // Force analog pins to the correct once when selecting IMD
-            Param::SetInt(Param::GPA1Func, IOMatrix::analoguepinfuncs::IMD_PWM);
-            Param::SetInt(Param::GPA2Func, IOMatrix::analoguepinfuncs::IMD_OK);
-
             // Start timer for measuring the frequency
             IMDBender.StartTimer();
 
