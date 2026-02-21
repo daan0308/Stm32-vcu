@@ -81,10 +81,10 @@ void EmusBMS::DecodeCAN(int id, uint8_t *data)
    }
    else if (id == 0x306)
    {
-       remainingKWh = (float) ((data[2] << 8) + (data[3]) / 100.0f);
+       remainingKWh = ((data[2] << 8) + (data[3]));
    }
    else if (id == 0x305) {
-       stateOfCharge = (data[5]);
+       stateOfCharge = (data[6]);
 
        // Reset timeout counter to the full timeout value
        timeoutCounter = Param::GetInt(Param::BMS_Timeout) * 10;
@@ -116,7 +116,7 @@ void EmusBMS::Task100Ms() {
     // Request data from BMS
     uint8_t data[8] = {0};
     can->Send((uint32_t) 0x301, data, (uint8_t) 0);
-    can->Send((uint32_t) 0x302, data, (uint8_t) 0);
+    can->Send((uint32_t) 0x308, data, (uint8_t) 0);
     can->Send((uint32_t) 0x305, data, (uint8_t) 0);
     can->Send((uint32_t) 0x306, data, (uint8_t) 0);
 }
