@@ -103,6 +103,10 @@
 #include "kangoobms.h"
 #include "OutlanderCanHeater.h"
 #include "OutlanderHeartBeat.h"
+#include "emusbms.h"
+#include "imd.h"
+#include "benderimd.h"
+#include "benderimdsimple.h"
 
 #define PRECHARGE_TIMEOUT 5  //5s
 
@@ -186,10 +190,15 @@ static SimpBMS BMSsimp;
 static LeafBMS BMSleaf;
 static DaisychainBMS BMSdaisychain;
 static KangooBMS BMSRenaultKangoo33;
+static EmusBMS BMSEmus;
 static DCDC DCDCnone;
 static TeslaDCDC DCDCTesla;
 static BMS* selectedBMS = &BMSnone;
 static DCDC* selectedDCDC = &DCDCnone;
+static IMD IMDNone;
+static BenderIMD IMDBender;
+static BenderIMDSimple IMDBenderSimple;
+static IMD* selectedIMD = &IMDNone;
 static Can_OBD2 canOBD2;
 static Shifter shifterNone;
 static RearOutlanderInverter rearoutlanderInv;
@@ -382,6 +391,7 @@ static void Ms100Task(void)
     selectedDCDC->Task100Ms();
     selectedShifter->Task100Ms();
     selectedHeater->Task100Ms();
+    selectedIMD->Task100Ms();
     canMap->SendAll();
 
     if(OutlanderCAN == true)
@@ -549,10 +559,24 @@ static void Ms10Task(void)
 
     selectedInverter->SetTorque(torquePercent);
 
+    // Brake light control - activate on regen OR physical brake press
+    bool brakeLightOn = false;
 
-    if(Param::GetInt(Param::potnom) < Param::GetInt(Param::RegenBrakeLight))
+    // Check for regen braking
+    if(torquePercent < Param::GetFloat(Param::RegenBrakeLight))
     {
-        //enable Brake Light Ouput
+        brakeLightOn = true;
+    }
+
+    // Check for physical brake press using parameter
+    if(Param::GetBool(Param::din_brake))
+    {
+        brakeLightOn = true;
+    }
+
+    // Set brake light output
+    if(brakeLightOn)
+    {
         IOMatrix::GetPin(IOMatrix::BRAKELIGHT)->Set();
     }
     else
@@ -913,6 +937,9 @@ static void UpdateBMS()
     case BMSModes::BMSRenaultKangoo33BMS:
         selectedBMS = &BMSRenaultKangoo33;
         break;
+    case BMSModes::BMSModeEmusBMS:
+        selectedBMS = &BMSEmus;
+        break;
     default:
         // Default to no BMS
         selectedBMS = &BMSnone;
@@ -983,6 +1010,38 @@ static void UpdateShifter()
 }
 
 
+static void UpdateIMD()
+{
+    selectedIMD->DeInit();
+    switch (Param::GetInt(Param::IMD_Type))
+    {
+        case IMDTypes::NOIMD:
+            selectedIMD = &IMDNone;
+            break;
+
+        case IMDTypes::BENDER_IMD:
+            selectedIMD = &IMDBender;
+
+            // Start timer for measuring the frequency
+            IMDBender.StartTimer();
+
+            break;
+
+        case IMDTypes::SIMPLE_BENDER_IMD:
+            selectedIMD = &IMDBenderSimple;
+            break;
+        default:
+            // Default to no imd
+            selectedIMD = &IMDNone;
+            break;
+    }
+
+    //This will call SetCanFilters() via the Clear Callback
+    canInterface[0]->ClearUserMessages();
+    canInterface[1]->ClearUserMessages();
+}
+
+
 //Whenever the user clears mapped can messages or changes the
 //CAN interface of a device, this will be called by the CanHardware module
 static void SetCanFilters()
@@ -1044,6 +1103,9 @@ void Param::Change(Param::PARAM_NUM paramNum)
         break;
     case Param::GearLvr:
         UpdateShifter();
+        break;
+    case Param::IMD_Type:
+        UpdateIMD();
         break;
     case Param::InverterCan:
     case Param::VehicleCan:
@@ -1276,6 +1338,7 @@ extern "C" int main(void)
     UpdateHeater();
     UpdateDCDC();
     UpdateShifter();
+    UpdateIMD();
 
     Stm32Scheduler s(TIM4); //We never exit main so it's ok to put it on stack
     scheduler = &s;
