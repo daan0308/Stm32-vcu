@@ -150,6 +150,7 @@
     PARAM_ENTRY(CAT_PWM,       Tim3_2_OC,   "",        1,      100000, 3600,   103 ) \
     PARAM_ENTRY(CAT_PWM,       Tim3_3_OC,   "",        1,      100000, 3600,   104 ) \
     PARAM_ENTRY(CAT_PWM,       CP_PWM,   "",        1,      100, 10,   132 ) \
+    PARAM_ENTRY(CAT_VEHICLE,   SpeedFactor, "RevInv/RevWheel", 0, 500, 84, 144) \
     VALUE_ENTRY(version,       VERSTR,              2000 ) \
     VALUE_ENTRY(opmode,        OPMODES,             2002 ) \
     VALUE_ENTRY(chgtyp,        CHGTYPS,             2003 ) \
@@ -313,6 +314,7 @@
 #define CAT_SHUNT    "ISA Shunt Control"
 #define CAT_IOPINS   "General Purpose I/O"
 #define CAT_PWM      "PWM Control"
+#define CAT_VEHICLE  "Vehicle Setup"
 #define MotorsAct    "0=Mg1and2, 1=Mg1, 2=Mg2, 3=BlendingMG2and1"
 #define PumpOutType  "0=GS450hOil, 1=TachoOut"
 #define LIMITREASON  "0=None, 1=UDClimLow, 2=UDClimHigh, 4=IDClimLow, 8=IDClimHigh, 16=TempLim"
