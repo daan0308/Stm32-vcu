@@ -549,8 +549,24 @@ static void Ms10Task(void)
 
     selectedInverter->SetTorque(torquePercent);
 
+    // Brake light control - activate on regen OR physical brake press
+    bool brakeLightOn = false;
 
     if(Param::GetInt(Param::potnom) < Param::GetInt(Param::RegenBrakeLight))
+    // Check for regen braking
+    if(torquePercent < Param::GetFloat(Param::RegenBrakeLight))
+    {
+        brakeLightOn = true;
+    }
+
+    // Check for physical brake press using parameter
+    if(Param::GetBool(Param::din_brake))
+    {
+        brakeLightOn = true;
+    }
+
+    // Set brake light output
+    if(brakeLightOn)
     {
         //enable Brake Light Ouput
         IOMatrix::GetPin(IOMatrix::BRAKELIGHT)->Set();
