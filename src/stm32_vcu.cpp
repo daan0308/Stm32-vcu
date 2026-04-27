@@ -75,6 +75,8 @@
 #include "extCharger.h"
 #include "amperacharger.h"
 #include "noHeater.h"
+#include "benderimdsimple.h"
+#include "imd.h"
 #include "bms.h"
 #include "simpbms.h"
 #include "leafbms.h"
@@ -191,6 +193,9 @@ static TeslaDCDC DCDCTesla;
 static BMS* selectedBMS = &BMSnone;
 static DCDC* selectedDCDC = &DCDCnone;
 static Can_OBD2 canOBD2;
+static IMD IMDNone;
+static BenderIMDSimple IMDBenderSimple;
+static IMD* selectedIMD = &IMDNone;
 static Shifter shifterNone;
 static RearOutlanderInverter rearoutlanderInv;
 static LinBus* lin;
@@ -382,6 +387,7 @@ static void Ms100Task(void)
     selectedDCDC->Task100Ms();
     selectedShifter->Task100Ms();
     selectedHeater->Task100Ms();
+    selectedIMD->Task100Ms();
     canMap->SendAll();
 
     if(OutlanderCAN == true)
@@ -982,6 +988,27 @@ static void UpdateShifter()
     canInterface[1]->ClearUserMessages();
 }
 
+static void UpdateIMD()
+{
+    selectedIMD->DeInit();
+    switch (Param::GetInt(Param::IMD_Type))
+    {
+        case IMDTypes::NOIMD:
+            selectedIMD = &IMDNone;
+            break;
+        case IMDTypes::SIMPLE_BENDER_IMD:
+            selectedIMD = &IMDBenderSimple;
+            break;
+        default:
+            // Default to no imd
+            selectedIMD = &IMDNone;
+            break;
+    }
+
+    //This will call SetCanFilters() via the Clear Callback
+    canInterface[0]->ClearUserMessages();
+    canInterface[1]->ClearUserMessages();
+}
 
 //Whenever the user clears mapped can messages or changes the
 //CAN interface of a device, this will be called by the CanHardware module
@@ -1044,6 +1071,9 @@ void Param::Change(Param::PARAM_NUM paramNum)
         break;
     case Param::GearLvr:
         UpdateShifter();
+        break;
+    case Param::IMD_Type:
+        UpdateIMD();
         break;
     case Param::InverterCan:
     case Param::VehicleCan:
@@ -1276,7 +1306,8 @@ extern "C" int main(void)
     UpdateHeater();
     UpdateDCDC();
     UpdateShifter();
-
+    UpdateIMD();
+    
     Stm32Scheduler s(TIM4); //We never exit main so it's ok to put it on stack
     scheduler = &s;
 
