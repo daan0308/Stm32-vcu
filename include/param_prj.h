@@ -27,7 +27,7 @@
    2. Temporary parameters (id = 0)
    3. Display values
  */
-//Next param id (increase when adding new parameter!): 139
+//Next param id (increase when adding new parameter!): 141
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_SETUP,     Inverter,     INVMODES, 0,      8,      0,      5  ) \
@@ -49,7 +49,8 @@
     PARAM_ENTRY(CAT_SETUP,     DCDCCan,      CAN_DEV,  0,      1,      1,      107 ) \
     PARAM_ENTRY(CAT_SETUP,     HeaterCan,    CAN_DEV,  0,      1,      1,      138 ) \
     PARAM_ENTRY(CAT_SETUP,     MotActive,    MotorsAct,0,      3,      0,      129 ) \
-    PARAM_ENTRY(CAT_SETUP,     SpeedFactor, "RevInv/RevWheel", 0, 500, 84,     157 ) \
+    PARAM_ENTRY(CAT_SETUP,     SpeedFactor, "RevInv/RevWheel", 0, 500, 84,     140 ) \
+    PARAM_ENTRY(CAT_SETUP,     IMD_Type,     IMDTYPE,  0,      2,      0,      139)  \
     PARAM_ENTRY(CAT_THROTTLE,  potmin,      "dig",     0,      4095,   0,      7  ) \
     PARAM_ENTRY(CAT_THROTTLE,  potmax,      "dig",     0,      4095,   4095,   8  ) \
     PARAM_ENTRY(CAT_THROTTLE,  pot2min,     "dig",     0,      4095,   4095,   9  ) \
@@ -244,8 +245,9 @@
     VALUE_ENTRY(udcheater,     "V",                 2097 ) \
     VALUE_ENTRY(powerheater,   "W",                 2098 ) \
     VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) \
-
-//Next value Id: 2108
+    VALUE_ENTRY(ImdFault,      ONOFF,               2108 ) \
+    VALUE_ENTRY(ImdState,      IMDSTATE,            2109 ) \
+//Next value Id: 2110
 
 //Dead params
 /*
@@ -259,7 +261,8 @@
                      "6=CoolantPump, 7=NegContactor, 8=BrakeLight, 9=ReverseLight, 10=HeatReq, 11=HVRequest," \
                      "12=DCFCRequest, 13=BrakeVacPump, 14=CoolingFan, 15=HvActive, 16=PwmTim3, 17=CpSpoof,"\
                      "18=GS450pump"
-#define APINFUNCS    "0=None, 1=ProxPilot, 2=BrakeVacSensor"
+#define APINFUNCS    "0=None, 1=ProxPilot, 2=BrakeVacSensor, 3=HeaterPot, 4=IMD_Ok"
+#define IMDTYPE      "0=None, 1=SimpleBender"
 #define SHIFTERS     "0=None, 1=BMW_F30, 2=JLR_G1, 3=JLR_G2, 4=BMW_E65"
 #define SHNTYPE      "0=None, 1=ISA, 2=SBOX, 3=VAG"
 #define DMODES       "0=CLOSED, 1=OPEN, 2=ERROR, 3=INVALID"
@@ -313,6 +316,7 @@
 #define MotorsAct    "0=Mg1and2, 1=Mg1, 2=Mg2, 3=BlendingMG2and1"
 #define PumpOutType  "0=GS450hOil, 1=TachoOut"
 #define LIMITREASON  "0=None, 1=UDClimLow, 2=UDClimHigh, 4=IDClimLow, 8=IDClimHigh, 16=TempLim"
+#define IMDSTATE     "0=IMD_OFF, 1=IMD_NORMAL, 2=IMD_MEASUREMENT_ERROR"
 
 #define CAN_PERIOD_100MS    0
 #define CAN_PERIOD_10MS     1
@@ -418,6 +422,12 @@ enum ShifterModes
     JLRG2 =3,
     BMWE65 =4
 
+};
+
+enum IMDTypes
+{
+    NOIMD = 0,
+    SIMPLE_BENDER_IMD = 1
 };
 
 enum ChargeControl
