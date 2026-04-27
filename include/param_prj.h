@@ -404,7 +404,8 @@ enum BMSModes
     BMSModeDaisychainSingleBMS = 2,
     BMSModeDaisychainDualBMS = 3,
     BMSModeLeafBMS = 4,
-    BMSRenaultKangoo33BMS = 5
+    BMSRenaultKangoo33BMS = 5,
+    BMSModeEmusBMS = 6
 };
 
 enum DCDCModes
