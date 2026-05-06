@@ -122,19 +122,19 @@
     PARAM_ENTRY(CAT_CLOCK,     Pre_Min,     "Mins",    0,      59,     0,      54 ) \
     PARAM_ENTRY(CAT_CLOCK,     Pre_Dur,     "Mins",    0,      60,     0,      55 ) \
     PARAM_ENTRY(CAT_IOPINS,    PumpPWM,    PumpOutType,0,      1,      0,      135 ) \
-    PARAM_ENTRY(CAT_IOPINS,    Out1Func,    PINFUNCS,  0,      15,     6,      80 ) \
-    PARAM_ENTRY(CAT_IOPINS,    Out2Func,    PINFUNCS,  0,      15,     7,      81 ) \
-    PARAM_ENTRY(CAT_IOPINS,    Out3Func,    PINFUNCS,  0,      15,     3,      82 ) \
-    PARAM_ENTRY(CAT_IOPINS,    SL1Func,     PINFUNCS,  0,      15,     0,      83 ) \
-    PARAM_ENTRY(CAT_IOPINS,    SL2Func,     PINFUNCS,  0,      15,     0,      84 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PWM1Func,    PINFUNCS,  0,      18,     0,      85 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PWM2Func,    PINFUNCS,  0,      18,     4,      86 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PWM3Func,    PINFUNCS,  0,      18,     2,      87 ) \
-    PARAM_ENTRY(CAT_IOPINS,    GP12VInFunc, PINFUNCS,  0,      19,     12,     98 ) \
-    PARAM_ENTRY(CAT_IOPINS,    HVReqFunc,   PINFUNCS,  0,      19,     12,     99 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PB1InFunc,   PINFUNCS,  0,      19,     12,     140 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PB2InFunc,   PINFUNCS,  0,      19,     12,     141 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PB3InFunc,   PINFUNCS,  0,      19,     12,     142 ) \
+    PARAM_ENTRY(CAT_IOPINS,    Out1Func,    PINFUNCS,  0,      20,     6,      80 ) \
+    PARAM_ENTRY(CAT_IOPINS,    Out2Func,    PINFUNCS,  0,      20,     7,      81 ) \
+    PARAM_ENTRY(CAT_IOPINS,    Out3Func,    PINFUNCS,  0,      20,     3,      82 ) \
+    PARAM_ENTRY(CAT_IOPINS,    SL1Func,     PINFUNCS,  0,      20,     0,      83 ) \
+    PARAM_ENTRY(CAT_IOPINS,    SL2Func,     PINFUNCS,  0,      20,     0,      84 ) \
+    PARAM_ENTRY(CAT_IOPINS,    PWM1Func,    PINFUNCS,  0,      20,     0,      85 ) \
+    PARAM_ENTRY(CAT_IOPINS,    PWM2Func,    PINFUNCS,  0,      20,     4,      86 ) \
+    PARAM_ENTRY(CAT_IOPINS,    PWM3Func,    PINFUNCS,  0,      20,     2,      87 ) \
+    PARAM_ENTRY(CAT_IOPINS,    GP12VInFunc, PINFUNCS,  0,      13,     12,     98 ) \
+    PARAM_ENTRY(CAT_IOPINS,    HVReqFunc,   PINFUNCS,  0,      13,     12,     99 ) \
+    PARAM_ENTRY(CAT_IOPINS,    PB1InFunc,   PINFUNCS,  0,      13,     12,     140 ) \
+    PARAM_ENTRY(CAT_IOPINS,    PB2InFunc,   PINFUNCS,  0,      13,     12,     141 ) \
+    PARAM_ENTRY(CAT_IOPINS,    PB3InFunc,   PINFUNCS,  0,      13,     12,     142 ) \
     PARAM_ENTRY(CAT_IOPINS,    GPA1Func,    APINFUNCS, 0,      2,      0,      110 ) \
     PARAM_ENTRY(CAT_IOPINS,    GPA2Func,    APINFUNCS, 0,      2,      0,      111 ) \
     PARAM_ENTRY(CAT_IOPINS,    ppthresh,    "dig",     0,      4095,   2500,   114 ) \
@@ -260,7 +260,7 @@
 #define PINFUNCS     "0=None, 1=ChaDeMoAlw, 2=OBCEnable, 3=HeaterEnable, 4=RunIndication, 5=WarnIndication," \
                      "6=CoolantPump, 7=NegContactor, 8=BrakeLight, 9=ReverseLight, 10=HeatReq, 11=HVRequest," \
                      "12=DCFCRequest, 13=BrakeVacPump, 14=CoolingFan, 15=HvActive, 16=PwmTim3, 17=CpSpoof,"\
-                     "18=GS450pump, 19=IMD_Ok"
+                     "18=GS450pump, 19=IMD_Ok, 20=CoolantPumpBattery"
 #define APINFUNCS    "0=None, 1=ProxPilot, 2=BrakeVacSensor, 3=HeaterPot"
 #define IMDTYPE      "0=None, 1=SimpleBender"
 #define SHIFTERS     "0=None, 1=BMW_F30, 2=JLR_G1, 3=JLR_G2, 4=BMW_E65"

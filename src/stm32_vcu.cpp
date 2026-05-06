@@ -623,6 +623,7 @@ static void Ms10Task(void)
         initbyCharge=false;
         DigIo::inv_out.Clear();//inverter power off
         IOMatrix::GetPin(IOMatrix::COOLANTPUMP)->Clear();//Coolant pump off if used
+        IOMatrix::GetPin(IOMatrix::COOLANTPUMPBATTERY)->Clear();//Battery coolant pump off if used
         Param::SetInt(Param::dir, 0); // shift to park/neutral on shutdown regardless of shifter pos
         selectedVehicle->DashOff();
         StartSig=false;//reset for next time
@@ -667,6 +668,7 @@ static void Ms10Task(void)
         }
         IOMatrix::GetPin(IOMatrix::NEGCONTACTOR)->Set();
         IOMatrix::GetPin(IOMatrix::COOLANTPUMP)->Set();
+        IOMatrix::GetPin(IOMatrix::COOLANTPUMPBATTERY)->Set();
         if(rlyDly!=0) rlyDly--;//here we are going to pause before energising precharge to prevent too many contactors pulling amps at the same time
         if(rlyDly==0) DigIo::prec_out.Set();//commence precharge
         if ((stt & (STAT_POTPRESSED | STAT_UDCBELOWUDCSW | STAT_UDCLIM)) == STAT_NONE)
