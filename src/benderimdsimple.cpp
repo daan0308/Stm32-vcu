@@ -9,8 +9,8 @@ void BenderIMDSimple::DeInit() {
 }
 
 void BenderIMDSimple::Task100Ms() {
-    int imd_meas = IOMatrix::GetAnaloguePin(IOMatrix::IMD_OK)->Get();
-    if (imd_meas > 2000) {
+    bool imd_ok = IOMatrix::GetPin(IOMatrix::IMD_OK)->Get();
+    if (imd_ok) {
         Param::SetInt(Param::ImdState, IMD_states::IMD_NORMAL);
         imd_fault_flag = 0;
     } else {
