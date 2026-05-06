@@ -103,6 +103,7 @@
 #include "kangoobms.h"
 #include "OutlanderCanHeater.h"
 #include "OutlanderHeartBeat.h"
+#include "emusbms.h"
 
 #define PRECHARGE_TIMEOUT 5  //5s
 
