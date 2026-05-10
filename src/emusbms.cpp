@@ -81,7 +81,7 @@ void EmusBMS::DecodeCAN(int id, uint8_t *data)
    }
    else if (id == 0x306)
    {
-       remainingKWh = ((data[2] << 8) + (data[3]));
+       remainingKWh = ((data[2] << 8) + (data[3])) / 100;
    }
    else if (id == 0x305) {
        stateOfCharge = (data[6]);
