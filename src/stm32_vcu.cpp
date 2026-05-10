@@ -195,6 +195,7 @@ static Can_OBD2 canOBD2;
 static Shifter shifterNone;
 static RearOutlanderInverter rearoutlanderInv;
 static LinBus* lin;
+static EmusBMS BMSEmus;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static void Ms200Task(void)
@@ -913,6 +914,9 @@ static void UpdateBMS()
         break;
     case BMSModes::BMSRenaultKangoo33BMS:
         selectedBMS = &BMSRenaultKangoo33;
+        break;
+    case BMSModes::BMSModeEmusBMS:
+        selectedBMS = &BMSEmus;
         break;
     default:
         // Default to no BMS
