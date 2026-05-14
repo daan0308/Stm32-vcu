@@ -40,8 +40,6 @@ class EmusBMS: public BMS
       float maxCellV = 0;
       float minTempC = 0;
       float maxTempC = 0;
+      float avgTempC = 0;
       float stateOfCharge = 0;
       float remainingKWh = 0;
-
-};
-#endif // EMUSBMS_H

@@ -66,57 +66,39 @@ float EmusBMS::MaxChargeCurrent()
    return 9998.0;
 }
 
-// Process voltage and temperature message from SimpBMS.
+// Decode CAN messages from EMUS G1 BMS.
+// Frame IDs assume default base address 0x300 (Base + Sub-ID).
+// Byte layouts per EMUS G1 BMS CAN Protocol v3.1.0.
 void EmusBMS::DecodeCAN(int id, uint8_t *data)
 {
-   if (id == 0x301)
+   if (id == 0x301) // Battery Voltage Overall Parameters (Base+1)
    {
-       minCellV = (float) (data[0] / 100.0f) + 2.00f;
-       maxCellV = (float) (data[1] / 100.0f) + 2.00f;
+      // Min/max cell voltage: uint8, 0.01 V/lsb, basis 2.00 V
+      minCellV = (float)(data[0]) / 100.0f + 2.00f;
+      maxCellV = (float)(data[1]) / 100.0f + 2.00f;
+
+      // Total pack voltage: uint32, 0.01 V/lsb, non-sequential byte order per spec v3.1.0:
+      // Data[5]=MSB (bits 31-24), Data[3]=2nd (bits 23-16), Data[6]=3rd (bits 15-8), Data[4]=LSB (bits 7-0)
+      uint32_t rawV = ((uint32_t)data[5] << 24) | ((uint32_t)data[3] << 16) |
+                      ((uint32_t)data[6] << 8)  |  (uint32_t)data[4];
+      packVoltage = rawV / 100.0f;
    }
-   else if (id == 0x308)
+   else if (id == 0x308) // Cell Temperature Overall Parameters (Base+8)
    {
-        minTempC = (float) (data[0]) - 100.0f;
-        maxTempC = (float) (data[1]) - 100.0f;
+      // Min/max/avg cell temperature: uint8, 1 °C/lsb, basis -100 °C
+      minTempC = (float)(data[0]) - 100.0f;
+      maxTempC = (float)(data[1]) - 100.0f;
+      avgTempC = (float)(data[2]) - 100.0f;
    }
-   else if (id == 0x306)
+   else if (id == 0x306) // Energy Parameters (Base+6)
    {
-       remainingKWh = ((data[2] << 8) + (data[3])) / 100;
+      // Remaining energy: uint16 MSB-first, 10 Wh/lsb → divide by 100 for kWh
+      remainingKWh = (float)((data[2] << 8) | data[3]) / 100.0f;
    }
-   else if (id == 0x305) {
-       stateOfCharge = (data[6]);
-
-       // Reset timeout counter to the full timeout value
-       timeoutCounter = Param::GetInt(Param::BMS_Timeout) * 10;
-   }
-}
-
-void EmusBMS::Task100Ms() {
-   // Decrement timeout counter.
-   if(timeoutCounter > 0) timeoutCounter--;
-
-   if(BMSDataValid()) {
-        Param::SetFloat(Param::BMS_Vmin, minCellV);
-        Param::SetFloat(Param::BMS_Vmax, maxCellV);
-        Param::SetFloat(Param::BMS_Tmin, minTempC);
-        Param::SetFloat(Param::BMS_Tmax, maxTempC);
-   }
-   else
+   else if (id == 0x305) // State of Charge Parameters (Base+5)
    {
-      Param::SetFloat(Param::BMS_Vmin, 0);
-      Param::SetFloat(Param::BMS_Vmax, 0);
-      Param::SetFloat(Param::BMS_Tmin, 0);
-      Param::SetFloat(Param::BMS_Tmax, 0);
-   }
+      // Pack current: int16 MSB-first, 0.1 A/lsb (negative = discharging)
+      packCurrent = (float)(int16_t)((data[0] << 8) | data[1]) / 10.0f;
 
-    Param::SetFloat(Param::KWh, remainingKWh);
-    Param::SetFloat(Param::SOC, stateOfCharge);
-    Param::SetInt(Param::BMS_ChargeLim, MaxChargeCurrent());
-
-    // Request data from BMS
-    uint8_t data[8] = {0};
-    can->Send((uint32_t) 0x301, data, (uint8_t) 0);
-    can->Send((uint32_t) 0x308, data, (uint8_t) 0);
-    can->Send((uint32_t) 0x305, data, (uint8_t) 0);
-    can->Send((uint32_t) 0x306, data, (uint8_t) 0);
-}
+      // User SOC: uint16 MSB-first, 0.01 %/lsb
+      // Note: bytes 5-6, not byte 
