@@ -32,6 +32,12 @@ public:
    bool Start() { return Param::GetBool(Param::din_start); }
 protected:
 
+void Task10Ms() {
+    float speed_rpm = Param::GetFloat(Param::speed);
+    float factor    = Param::GetFloat(Param::SpeedFactor);
+    Param::SetFloat(Param::Veh_Speed, speed_rpm / factor);
+}
+
 };
 
 #endif // VEHICLE_H_INCLUDED
