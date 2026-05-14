@@ -43,3 +43,10 @@ class EmusBMS: public BMS
       float avgTempC = 0;
       float stateOfCharge = 0;
       float remainingKWh = 0;
+      float packVoltage = 0;
+      float packCurrent = 0;
+      float maxDischargeCurrent = 0; // A, from Neuro 0x522
+      float maxRegenCurrent = 0;     // A, from Neuro 0x523
+
+};
+#endif // EMUSBMS_H

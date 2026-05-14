@@ -31,10 +31,12 @@
 void EmusBMS::SetCanInterface(CanHardware* c)
 {
    can = c;
-   can->RegisterUserMessage(0x301); // Extended ID for min and max cell voltages
-   can->RegisterUserMessage(0x308); // Extended ID for min and max cell temperatures
-   can->RegisterUserMessage(0x306); // Extended ID for energy parameters (kWh)
-   can->RegisterUserMessage(0x305); // Extended ID for SoC
+   can->RegisterUserMessage(0x301); // Battery Voltage Overall Parameters (Base+1)
+   can->RegisterUserMessage(0x308); // Cell Temperature Overall Parameters (Base+8)
+   can->RegisterUserMessage(0x306); // Energy Parameters (Base+6)
+   can->RegisterUserMessage(0x305); // State of Charge Parameters (Base+5)
+   can->RegisterUserMessage(0x522); // Neuro: min discharge voltage + max discharge current
+   can->RegisterUserMessage(0x523); // Neuro: max regeneration voltage + max regen current
 }
 
 bool EmusBMS::BMSDataValid() {
@@ -95,10 +97,73 @@ void EmusBMS::DecodeCAN(int id, uint8_t *data)
       // Remaining energy: uint16 MSB-first, 10 Wh/lsb → divide by 100 for kWh
       remainingKWh = (float)((data[2] << 8) | data[3]) / 100.0f;
    }
+   else if (id == 0x522) // Neuro: fixed CAN ID, little-endian uint16s
+   {
+      // Max discharge battery current: bytes 6(LSB) 7(MSB), 0.1 A/lsb
+      maxDischargeCurrent = (float)((uint16_t)(data[7] << 8) | data[6]) / 10.0f;
+   }
+   else if (id == 0x523) // Neuro: fixed CAN ID, little-endian uint16s
+   {
+      // Max regeneration (charge) current: bytes 2(LSB) 3(MSB), 0.1 A/lsb
+      maxRegenCurrent = (float)((uint16_t)(data[3] << 8) | data[2]) / 10.0f;
+   }
    else if (id == 0x305) // State of Charge Parameters (Base+5)
    {
       // Pack current: int16 MSB-first, 0.1 A/lsb (negative = discharging)
       packCurrent = (float)(int16_t)((data[0] << 8) | data[1]) / 10.0f;
 
       // User SOC: uint16 MSB-first, 0.01 %/lsb
-      // Note: bytes 5-6, not byte 
+      // Note: bytes 5-6, not byte 6 alone. Requires user SOC range = 0-100 % in EMUS Control Panel.
+      stateOfCharge = (float)(((uint16_t)data[5] << 8) | data[6]) / 100.0f;
+
+      // Reset timeout counter to the full timeout value
+      timeoutCounter = Param::GetInt(Param::BMS_Timeout) * 10;
+   }
+}
+
+void EmusBMS::Task100Ms() {
+   // Decrement timeout counter.
+   if(timeoutCounter > 0) timeoutCounter--;
+
+   if(BMSDataValid()) {
+      Param::SetFloat(Param::BMS_Vmin, minCellV);
+      Param::SetFloat(Param::BMS_Vmax, maxCellV);
+      Param::SetFloat(Param::BMS_Tmin, minTempC);
+      Param::SetFloat(Param::BMS_Tmax, maxTempC);
+      Param::SetInt(Param::BMS_Tavg, (int)avgTempC);
+      Param::SetFloat(Param::idc, packCurrent);
+      Param::SetFloat(Param::udc2, packVoltage);
+      // Auto-calibrate precharge threshold to actual pack voltage (matches Leaf BMS convention)
+      if(packVoltage > 50.0f)
+         Param::SetFloat(Param::udcsw, packVoltage - 20.0f);
+      // Instantaneous power: positive = charging, negative = discharging
+      Param::SetFloat(Param::power, (packVoltage * packCurrent) / 1000.0f);
+      // BMS power limits from Neuro messages 0x522/0x523 (fixed CAN IDs).
+      // Neuro messages must be enabled in the EMUS Control Panel to be broadcast.
+      // Values stay at 0 if the BMS firmware does not transmit them.
+      if(packVoltage > 50.0f) {
+         Param::SetInt(Param::BMS_MaxOutput, (int)((maxDischargeCurrent * packVoltage) / 1000.0f));
+         Param::SetInt(Param::BMS_MaxInput,  (int)((maxRegenCurrent    * packVoltage) / 1000.0f));
+      }
+   }
+   else
+   {
+      Param::SetFloat(Param::BMS_Vmin, 0);
+      Param::SetFloat(Param::BMS_Vmax, 0);
+      Param::SetFloat(Param::BMS_Tmin, 0);
+      Param::SetFloat(Param::BMS_Tmax, 0);
+      Param::SetFloat(Param::idc, 0);
+      Param::SetFloat(Param::udc2, 0);
+   }
+
+   Param::SetFloat(Param::KWh, remainingKWh);
+   Param::SetFloat(Param::SOC, stateOfCharge);
+   Param::SetInt(Param::BMS_ChargeLim, MaxChargeCurrent());
+
+   // Poll BMS for all required frames
+   uint8_t data[8] = {0};
+   can->Send((uint32_t) 0x301, data, (uint8_t) 0);
+   can->Send((uint32_t) 0x308, data, (uint8_t) 0);
+   can->Send((uint32_t) 0x305, data, (uint8_t) 0);
+   can->Send((uint32_t) 0x306, data, (uint8_t) 0);
+}
