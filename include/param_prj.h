@@ -164,7 +164,8 @@
     VALUE_ENTRY(power,         "kW",                2011 ) \
     VALUE_ENTRY(idc,           "A",                 2012 ) \
     VALUE_ENTRY(KWh,           "kwh",               2013 ) \
-    VALUE_ENTRY(range,         "km",                2108 ) \
+    VALUE_ENTRY(range,         "km",                2109 ) \
+    VALUE_ENTRY(consumption,   "Wh/km",             2110 ) \
     VALUE_ENTRY(AMPh,          "Ah",                2014 ) \
     VALUE_ENTRY(SOC,           "%",                 2015 ) \
     VALUE_ENTRY(BMS_Vmin,      "V",                 2084 ) \
@@ -245,7 +246,7 @@
     VALUE_ENTRY(powerheater,   "W",                 2098 ) \
     VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) \
 
-//Next value Id: 2109
+//Next value Id: 2111
 
 //Dead params
 /*
