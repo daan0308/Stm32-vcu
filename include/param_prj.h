@@ -246,7 +246,7 @@
     VALUE_ENTRY(powerheater,   "W",                 2098 ) \
     VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) \
 
-//Next value Id: 2111
+//Next value Id: 2108
 
 //Dead params
 /*
