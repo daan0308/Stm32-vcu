@@ -49,7 +49,7 @@
     PARAM_ENTRY(CAT_SETUP,     DCDCCan,      CAN_DEV,  0,      1,      1,      107 ) \
     PARAM_ENTRY(CAT_SETUP,     HeaterCan,    CAN_DEV,  0,      1,      1,      138 ) \
     PARAM_ENTRY(CAT_SETUP,     MotActive,    MotorsAct,0,      3,      0,      129 ) \
-    PARAM_ENTRY(CAT_SETUP,     IMD_Type,     IMDTYPE,  0,      2,      0,      139)  \
+    PARAM_ENTRY(CAT_SETUP,     IMD_Type,     IMDTYPE,  0,      2,      0,      9001)  \
     PARAM_ENTRY(CAT_THROTTLE,  potmin,      "dig",     0,      4095,   0,      7  ) \
     PARAM_ENTRY(CAT_THROTTLE,  potmax,      "dig",     0,      4095,   4095,   8  ) \
     PARAM_ENTRY(CAT_THROTTLE,  pot2min,     "dig",     0,      4095,   4095,   9  ) \
@@ -244,8 +244,8 @@
     VALUE_ENTRY(udcheater,     "V",                 2097 ) \
     VALUE_ENTRY(powerheater,   "W",                 2098 ) \
     VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) \
-    VALUE_ENTRY(ImdFault,      ONOFF,               2108 ) \
-    VALUE_ENTRY(ImdState,      IMDSTATE,            2109 ) \
+    VALUE_ENTRY(ImdFault,      ONOFF,               9002 ) \
+    VALUE_ENTRY(ImdState,      IMDSTATE,            9003 ) \
 //Next value Id: 2110
 
 //Dead params
