@@ -103,6 +103,7 @@
 #include "kangoobms.h"
 #include "OutlanderCanHeater.h"
 #include "OutlanderHeartBeat.h"
+#include "emusbms.h"
 
 #define PRECHARGE_TIMEOUT 5  //5s
 
@@ -194,6 +195,7 @@ static Can_OBD2 canOBD2;
 static Shifter shifterNone;
 static RearOutlanderInverter rearoutlanderInv;
 static LinBus* lin;
+static EmusBMS BMSEmus;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static void Ms200Task(void)
@@ -414,6 +416,19 @@ static void Ms100Task(void)
     Param::SetFloat(Param::INVudc, selectedInverter->GetInverterVoltage()); //display inverter derived dc link voltage on web interface
 
     Param::SetInt(Param::T15Stat, selectedVehicle->Ready());
+
+    // Predicted range: rolling average efficiency (Wh/km) from instantaneous power and speed.
+    // avgEfficiency starts at 150 Wh/km and adapts with an ~30s EMA (300 x 100ms ticks).
+    // Only updated when motoring (power > 0) above 5 kph to avoid regen/standstill noise.
+    static float avgEfficiency = 150.0f;
+    float vehSpeed = Param::GetFloat(Param::Veh_Speed);
+    float powerKw  = Param::GetFloat(Param::power);
+    if(vehSpeed > 5.0f && powerKw > 0.0f)
+        avgEfficiency += ((powerKw * 1000.0f / vehSpeed) - avgEfficiency) / 300.0f;
+    float kwh = Param::GetFloat(Param::KWh);
+    if(kwh > 0.0f && avgEfficiency > 0.0f)
+        Param::SetFloat(Param::range, kwh * 1000.0f / avgEfficiency);
+    Param::SetFloat(Param::consumption, avgEfficiency);
 
     int32_t IsaTemp=ISA::Temperature;
     Param::SetInt(Param::tmpaux,IsaTemp);
@@ -930,6 +945,9 @@ static void UpdateBMS()
         break;
     case BMSModes::BMSRenaultKangoo33BMS:
         selectedBMS = &BMSRenaultKangoo33;
+        break;
+    case BMSModes::BMSModeEmusBMS:
+        selectedBMS = &BMSEmus;
         break;
     default:
         // Default to no BMS
