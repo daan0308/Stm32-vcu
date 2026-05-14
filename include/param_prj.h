@@ -246,7 +246,7 @@
     VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) \
     VALUE_ENTRY(ImdFault,      ONOFF,               9000 ) \
     VALUE_ENTRY(ImdState,      IMDSTATE,            9001 ) \
-//Next value Id: 2110
+//Next value Id: 2108
 
 //Dead params
 /*
