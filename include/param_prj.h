@@ -164,8 +164,8 @@
     VALUE_ENTRY(power,         "kW",                2011 ) \
     VALUE_ENTRY(idc,           "A",                 2012 ) \
     VALUE_ENTRY(KWh,           "kwh",               2013 ) \
-    VALUE_ENTRY(range,         "km",                2109 ) \
-    VALUE_ENTRY(consumption,   "Wh/km",             2110 ) \
+    VALUE_ENTRY(range,         "km",                9004 ) \
+    VALUE_ENTRY(consumption,   "Wh/km",             9005 ) \
     VALUE_ENTRY(AMPh,          "Ah",                2014 ) \
     VALUE_ENTRY(SOC,           "%",                 2015 ) \
     VALUE_ENTRY(BMS_Vmin,      "V",                 2084 ) \
