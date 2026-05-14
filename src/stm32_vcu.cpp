@@ -434,6 +434,7 @@ static void Ms100Task(void)
     float kwh = Param::GetFloat(Param::KWh);
     if(kwh > 0.0f && avgEfficiency > 0.0f)
         Param::SetFloat(Param::range, kwh * 1000.0f / avgEfficiency);
+    Param::SetFloat(Param::consumption, avgEfficiency);
 
     int32_t IsaTemp=ISA::Temperature;
     Param::SetInt(Param::tmpaux,IsaTemp);
