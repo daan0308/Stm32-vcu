@@ -26,17 +26,35 @@
  * the BMS is actively sending data or not. This data can be
  * used to safely stop any charging process if the BMS is not
  * working correctly.
+ *
+ * ChargeAllowed() uses the EMUS diagnostic codes frame (0x307) as the
+ * single source of truth for protection limits, so thresholds only need
+ * to be configured in the EMUS Control Panel and not duplicated on the VCU.
+ *
+ * J1939 charger mimic: the VCU sends 0x18FF50E5 every second to make the EMUS
+ * think a J1939 charger is present. The EMUS responds with 0x1806E5F4 containing
+ * its requested charge voltage and current. MaxChargeCurrent() returns that value
+ * directly, so the Tesla Gen2 charger's power setpoint tracks the EMUS CC/CV
+ * profile rather than being a fixed on/off signal.
+ *
+ * Diagnostic codes frame 0x307 byte layout (all bits active-high):
+ *   Byte 0: bit0=CellUnderVolt, bit1=CellOverVolt, bit2=DchrgOvrCurr,
+ *            bit3=ChrgOvrCurr,   bit4=CellModOverHeat, bit5=Leakage,
+ *            bit6=NoCellComm,    bit7=MS_ConfError
+ *   Byte 1: bit0=MSIntCANError,  bit1=MSCommCANErr, bit2=ChargerConnected,
+ *            bit3=CellOverHeat,  bit4=NoCurrentSensor, bit5=PackUnderVolt,
+ *            bit6=PackOverVolt,  bit7=CellUnderHeat
  */
 
 void EmusBMS::SetCanInterface(CanHardware* c)
 {
    can = c;
    can->RegisterUserMessage(0x301); // Battery Voltage Overall Parameters (Base+1)
-   can->RegisterUserMessage(0x308); // Cell Temperature Overall Parameters (Base+8)
-   can->RegisterUserMessage(0x306); // Energy Parameters (Base+6)
    can->RegisterUserMessage(0x305); // State of Charge Parameters (Base+5)
-   can->RegisterUserMessage(0x522); // Neuro: min discharge voltage + max discharge current
-   can->RegisterUserMessage(0x523); // Neuro: max regeneration voltage + max regen current
+   can->RegisterUserMessage(0x306); // Energy Parameters (Base+6)
+   can->RegisterUserMessage(0x307);     // Diagnostic Codes (Base+7)
+   can->RegisterUserMessage(0x308);     // Cell Temperature Overall Parameters (Base+8)
+   can->RegisterUserMessage(0x1806E5F4); // J1939: BMS→Charger (EMUS sends in response to 0x18FF50E5)
 }
 
 bool EmusBMS::BMSDataValid() {
@@ -46,26 +64,36 @@ bool EmusBMS::BMSDataValid() {
 }
 
 // Return whether charging is currently permitted.
+// Uses EMUS diagnostic flags as the source of truth — no need to duplicate
+// voltage/temperature thresholds on the VCU side.
 bool EmusBMS::ChargeAllowed()
 {
-   // Refuse to charge if the BMS is not sending data.
    if(!BMSDataValid()) return false;
 
-   // Refuse to charge if the voltage or temperature is out of range.
-   if(maxCellV > Param::GetFloat(Param::BMS_VmaxLimit)) return false;
-   if(minCellV < Param::GetFloat(Param::BMS_VminLimit)) return false;
-   if(maxTempC > Param::GetFloat(Param::BMS_TmaxLimit)) return false;
-   if(minTempC < Param::GetFloat(Param::BMS_TminLimit)) return false;
+   // Stop charging on any cell/pack voltage or temperature protection event.
+   // Byte 0 flags:
+   if(diagByte0 & 0x02) return false; // CellOverVoltage
+   if(diagByte0 & 0x08) return false; // ChrgOverCurrent
+   if(diagByte0 & 0x10) return false; // CellModOverHeat
+   if(diagByte0 & 0x20) return false; // Leakage (insulation fault)
+   // Byte 1 flags:
+   if(diagByte1 & 0x08) return false; // CellOverHeat
+   if(diagByte1 & 0x40) return false; // PackOverVoltage
+   if(diagByte1 & 0x80) return false; // CellUnderHeat (too cold to charge)
 
-   // Otherwise, charging is permitted.
    return true;
 }
 
 // Return the maximum charge current allowed by the BMS.
+// In J1939 mode (once 0x1806E5F4 has been received), returns the EMUS-requested
+// current directly so the Tesla charger tracks the EMUS CC/CV taper profile.
+// Falls back to 9998 (unlimited) if J1939 mode is not active.
 float EmusBMS::MaxChargeCurrent()
 {
    if(!ChargeAllowed()) return 0;
-   return 9998.0;
+   if(!j1939Active)    return 9998.0f; // J1939 not active, pass through unlimited
+   if(j1939StopBit)    return 0;       // EMUS requests charger stop
+   return j1939ReqCurrent;
 }
 
 // Decode CAN messages from EMUS G1 BMS.
@@ -85,39 +113,46 @@ void EmusBMS::DecodeCAN(int id, uint8_t *data)
                       ((uint32_t)data[6] << 8)  |  (uint32_t)data[4];
       packVoltage = rawV / 100.0f;
    }
-   else if (id == 0x308) // Cell Temperature Overall Parameters (Base+8)
+   else if (id == 0x305) // State of Charge Parameters (Base+5)
    {
-      // Min/max/avg cell temperature: uint8, 1 °C/lsb, basis -100 °C
-      minTempC = (float)(data[0]) - 100.0f;
-      maxTempC = (float)(data[1]) - 100.0f;
-      avgTempC = (float)(data[2]) - 100.0f;
+      // Pack current: int16 MSB-first, 0.1 A/lsb (negative = discharging)
+      packCurrent = (float)(int16_t)((data[0] << 8) | data[1]) / 10.0f;
+
+      // User SOC: uint16 MSB-first, 1 %/lsb (EMUS sends 0-100, not 0-10000)
+      // Note: bytes 5-6, not byte 6 alone. Requires user SOC range = 0-100 % in EMUS Control Panel.
+      stateOfCharge = (float)(((uint16_t)data[5] << 8) | data[6]);
+
+      // Reset timeout counter to the full timeout value
+      timeoutCounter = Param::GetInt(Param::BMS_Timeout) * 10;
    }
    else if (id == 0x306) // Energy Parameters (Base+6)
    {
       // Remaining energy: uint16 MSB-first, 10 Wh/lsb → divide by 100 for kWh
       remainingKWh = (float)((data[2] << 8) | data[3]) / 100.0f;
    }
-   else if (id == 0x522) // Neuro: fixed CAN ID, little-endian uint16s
+   else if (id == 0x1806E5F4) // J1939 BMS→Charger: EMUS requested charge limits
    {
-      // Max discharge battery current: bytes 6(LSB) 7(MSB), 0.1 A/lsb
-      maxDischargeCurrent = (float)((uint16_t)(data[7] << 8) | data[6]) / 10.0f;
+      // Bytes 0-1: max allowable charge voltage, uint16 MSB-first, 0.1 V/lsb
+      j1939ReqVoltage = (float)((uint16_t)(data[0] << 8) | data[1]) / 10.0f;
+      // Bytes 2-3: max allowable charge current, uint16 MSB-first, 0.1 A/lsb
+      j1939ReqCurrent = (float)((uint16_t)(data[2] << 8) | data[3]) / 10.0f;
+      // Byte 4 bit 0: 0 = start charging, 1 = stop charging
+      j1939StopBit    = (data[4] & 0x01) != 0;
+      j1939Active     = true;
    }
-   else if (id == 0x523) // Neuro: fixed CAN ID, little-endian uint16s
+   else if (id == 0x307) // Diagnostic Codes (Base+7)
    {
-      // Max regeneration (charge) current: bytes 2(LSB) 3(MSB), 0.1 A/lsb
-      maxRegenCurrent = (float)((uint16_t)(data[3] << 8) | data[2]) / 10.0f;
+      // Store raw flag bytes for use in ChargeAllowed().
+      // See file header comment for bit layout.
+      diagByte0 = data[0];
+      diagByte1 = data[1];
    }
-   else if (id == 0x305) // State of Charge Parameters (Base+5)
+   else if (id == 0x308) // Cell Temperature Overall Parameters (Base+8)
    {
-      // Pack current: int16 MSB-first, 0.1 A/lsb (negative = discharging)
-      packCurrent = (float)(int16_t)((data[0] << 8) | data[1]) / 10.0f;
-
-      // User SOC: uint16 MSB-first, 0.01 %/lsb
-      // Note: bytes 5-6, not byte 6 alone. Requires user SOC range = 0-100 % in EMUS Control Panel.
-      stateOfCharge = (float)(((uint16_t)data[5] << 8) | data[6]) / 100.0f;
-
-      // Reset timeout counter to the full timeout value
-      timeoutCounter = Param::GetInt(Param::BMS_Timeout) * 10;
+      // Min/max/avg cell temperature: uint8, 1 °C/lsb, basis -100 °C
+      minTempC = (float)(data[0]) - 100.0f;
+      maxTempC = (float)(data[1]) - 100.0f;
+      avgTempC = (float)(data[2]) - 100.0f;
    }
 }
 
@@ -138,13 +173,6 @@ void EmusBMS::Task100Ms() {
          Param::SetFloat(Param::udcsw, packVoltage - 20.0f);
       // Instantaneous power: positive = charging, negative = discharging
       Param::SetFloat(Param::power, (packVoltage * packCurrent) / 1000.0f);
-      // BMS power limits from Neuro messages 0x522/0x523 (fixed CAN IDs).
-      // Neuro messages must be enabled in the EMUS Control Panel to be broadcast.
-      // Values stay at 0 if the BMS firmware does not transmit them.
-      if(packVoltage > 50.0f) {
-         Param::SetInt(Param::BMS_MaxOutput, (int)((maxDischargeCurrent * packVoltage) / 1000.0f));
-         Param::SetInt(Param::BMS_MaxInput,  (int)((maxRegenCurrent    * packVoltage) / 1000.0f));
-      }
    }
    else
    {
@@ -163,7 +191,28 @@ void EmusBMS::Task100Ms() {
    // Poll BMS for all required frames
    uint8_t data[8] = {0};
    can->Send((uint32_t) 0x301, data, (uint8_t) 0);
-   can->Send((uint32_t) 0x308, data, (uint8_t) 0);
    can->Send((uint32_t) 0x305, data, (uint8_t) 0);
    can->Send((uint32_t) 0x306, data, (uint8_t) 0);
+   can->Send((uint32_t) 0x307, data, (uint8_t) 0);
+   can->Send((uint32_t) 0x308, data, (uint8_t) 0);
+
+   // J1939 charger mimic: send 0x18FF50E5 every 1 second.
+   // The EMUS only broadcasts its requested charge limits (0x1806E5F4) in response
+   // to receiving this message. The spec requires it within every 5 seconds.
+   // We report actual pack voltage as charger output voltage; current is not
+   // available from Tesla charger feedback so we report 0.
+   j1939TxCounter++;
+   if(j1939TxCounter >= 10)
+   {
+      j1939TxCounter = 0;
+      uint8_t j1939[8] = {0};
+      uint16_t reportVoltage = (uint16_t)(packVoltage * 10.0f); // 0.1 V/lsb
+      j1939[0] = (reportVoltage >> 8) & 0xFF; // output voltage MSB
+      j1939[1] =  reportVoltage       & 0xFF; // output voltage LSB
+      j1939[2] = 0;                           // output current MSB (unknown)
+      j1939[3] = 0;                           // output current LSB (unknown)
+      j1939[4] = 0x00;                        // status: all normal
+      j1939[5] = 0; j1939[6] = 0; j1939[7] = 0;
+      can->Send(0x18FF50E5, (uint32_t*)j1939, 8);
+   }
 }

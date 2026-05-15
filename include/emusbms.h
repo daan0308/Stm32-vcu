@@ -45,8 +45,15 @@ class EmusBMS: public BMS
       float remainingKWh = 0;
       float packVoltage = 0;
       float packCurrent = 0;
-      float maxDischargeCurrent = 0; // A, from Neuro 0x522
-      float maxRegenCurrent = 0;     // A, from Neuro 0x523
+      uint8_t diagByte0 = 0;        // diagnostic flags byte 0 from frame 0x307
+      uint8_t diagByte1 = 0;        // diagnostic flags byte 1 from frame 0x307
+
+      // J1939 charger mimic state (frames 0x1806E5F4 / 0x18FF50E5)
+      float   j1939ReqVoltage = 0;  // V,  EMUS requested charge voltage
+      float   j1939ReqCurrent = 0;  // A,  EMUS requested charge current
+      bool    j1939StopBit    = false; // true = EMUS requests stop charging
+      bool    j1939Active     = false; // true once 0x1806E5F4 has been received
+      int     j1939TxCounter  = 0;  // 100ms ticks until next 0x18FF50E5 transmit
 
 };
 #endif // EMUSBMS_H
