@@ -79,6 +79,7 @@
 #include "simpbms.h"
 #include "leafbms.h"
 #include "daisychainbms.h"
+#include "emusbms.h"
 #include "outlanderCharger.h"
 #include "Can_OBD2.h"
 #include "dcdc.h"
@@ -381,6 +382,9 @@ static void Ms100Task(void)
     selectedVehicle->Task100Ms();
     selectedCharger->Task100Ms();
     selectedBMS->Task100Ms();
+    Param::SetInt(Param::BMS_DischargeOk, selectedBMS->DischargeAllowed() ? 1 : 0);
+    Param::SetFloat(Param::BMS_DischargeLevel, selectedBMS->DischargeReductionLevel() * 100.0f);
+    Param::SetInt(Param::BMS_ProtSrc, selectedBMS->ProtectionSource());
     selectedDCDC->Task100Ms();
     selectedShifter->Task100Ms();
     selectedHeater->Task100Ms();
