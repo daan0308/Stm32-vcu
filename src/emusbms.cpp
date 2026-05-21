@@ -57,11 +57,13 @@
  *     bit 4: MS_CommonBusMalfunction  bit 5: HighCellTemp
  *   Byte 7  BATTERY STATUS FLAGS
  *
- * J1939 charger mimic: the VCU sends 0x18FF50E5 every second so the EMUS
- * thinks a J1939 charger is present. The EMUS responds with 0x1806E5F4
- * containing its requested charge voltage and current. MaxChargeCurrent()
- * returns that value directly, so the used charger's power setpoint
- * tracks the EMUS CC/CV profile.
+ * J1939 charger mimic: while opmode == MOD_CHARGE the VCU sends 0x18FF50E5
+ * every second so the EMUS knows a J1939 charger is present. The EMUS responds
+ * with 0x1806E5F4 containing its requested charge voltage and current.
+ * MaxChargeCurrent() returns that value directly, so the charger's power
+ * setpoint tracks the EMUS CC/CV profile automatically.
+ * The frame is suppressed outside charge mode to prevent the EMUS from setting
+ * the ChargerConnected protection flag (0x307 bit 10) during drive.
  */
 
 void EmusBMS::SetCanInterface(CanHardware* c)
@@ -301,19 +303,31 @@ void EmusBMS::Task100Ms()
       }
    }
 
-   // J1939 charger mimic: send 0x18FF50E5 every second
-   j1939TxCounter++;
-   if (j1939TxCounter >= 10)
+   // J1939 charger mimic: send 0x18FF50E5 every second, but only while in charge mode.
+   // Sending this frame unconditionally makes the EMUS set the ChargerConnected protection
+   // flag (0x307 bit 10) even when not charging. Gating on MOD_CHARGE prevents that.
+   // j1939Active and the counter are reset on exit so the first TX fires promptly on
+   // the next charge session and stale current limits are not carried over.
+   if (Param::GetInt(Param::opmode) == MOD_CHARGE)
    {
-      j1939TxCounter = 0;
-      uint8_t j1939[8] = {0};
-      uint16_t reportVoltage = (uint16_t)(packVoltage * 10.0f);
-      j1939[0] = (reportVoltage >> 8) & 0xFF;
-      j1939[1] =  reportVoltage       & 0xFF;
-      j1939[2] = 0;
-      j1939[3] = 0;
-      j1939[4] = 0x00;
-      j1939[5] = 0; j1939[6] = 0; j1939[7] = 0;
-      can->Send(0x18FF50E5, (uint32_t*)j1939, 8);
+      j1939TxCounter++;
+      if (j1939TxCounter >= 10)
+      {
+         j1939TxCounter = 0;
+         uint8_t j1939[8] = {0};
+         uint16_t reportVoltage = (uint16_t)(packVoltage * 10.0f);
+         j1939[0] = (reportVoltage >> 8) & 0xFF;
+         j1939[1] =  reportVoltage       & 0xFF;
+         j1939[2] = 0;
+         j1939[3] = 0;
+         j1939[4] = 0x00;
+         j1939[5] = 0; j1939[6] = 0; j1939[7] = 0;
+         can->Send(0x18FF50E5, (uint32_t*)j1939, 8);
+      }
+   }
+   else
+   {
+      j1939TxCounter = 0;     // reset so first TX is prompt when charging starts
+      j1939Active    = false; // clear stale current limit from previous charge session
    }
 }

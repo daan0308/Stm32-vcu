@@ -62,11 +62,18 @@ Charging stops on any of the following protection flags:
 
 ### J1939 Charger Mimic
 
-The VCU always sends `0x18FF50E5` every second to mimic a J1939 charger. The EMUS responds
-with `0x1806E5F4` containing its requested charge voltage and current for the current CC/CV
-phase. `MaxChargeCurrent()` returns this value directly, so the charger's power setpoint
-tracks the EMUS profile automatically. Any charger that consumes `MaxChargeCurrent()` will
-benefit from this — it is not specific to any particular charger model.
+While `opmode == MOD_CHARGE` the VCU sends `0x18FF50E5` every second to mimic a J1939
+charger. The EMUS responds with `0x1806E5F4` containing its requested charge voltage and
+current for the current CC/CV phase. `MaxChargeCurrent()` returns this value directly, so
+the charger's power setpoint tracks the EMUS profile automatically. Any charger that
+consumes `MaxChargeCurrent()` will benefit from this — it is not specific to any particular
+charger model.
+
+The frame is **not sent outside charge mode**. Sending it unconditionally causes the EMUS
+to set the `ChargerConnected` protection flag (frame `0x307` bit 10) during driving, which
+is misleading and can interfere with protection logic. The J1939 receive state
+(`j1939Active`) is cleared on charge mode exit so stale current limits are not carried over
+into the next session.
 
 ---
 
@@ -126,6 +133,32 @@ level = clamp((BMS_Vmin − cellUVProtectionThreshold) / band, 0, 1)
 
 At `BMS_Vmin == lowCellVReductionThreshold`: `level = 1.0` (full torque)  
 At `BMS_Vmin == cellUVProtectionThreshold`:  `level = 0.0` (zero torque, just before hard cutoff)
+
+### Threshold Hysteresis
+
+Every protection and reduction threshold in the EMUS has a separate activate and deactivate
+value, both configurable in the EMUS Control Panel (for example: `CellUnderVoltage` activates
+at 2.70 V, deactivates at 2.80 V). The EMUS applies this hysteresis internally before setting
+or clearing a flag in frame `0x307`.
+
+The VCU acts on the flags themselves — it does not perform its own voltage or temperature
+threshold comparisons for the binary on/off decisions. By the time the VCU sees a flag set
+or cleared, the EMUS has already applied its own hysteresis. There is therefore no risk of
+jitter at the threshold boundary in the VCU. Adding a second hysteresis layer would be
+counterproductive: the VCU could hold discharge blocked even after the EMUS had already
+cleared the flag.
+
+The one place where the VCU does its own voltage arithmetic is the proportional low-cell-
+voltage derating level shown above. This calculation only runs while the `LowCellVoltage`
+reduction flag is already active. Because it produces a continuous smooth output rather than
+a binary decision, voltage jitter near the band edges produces smooth torque variation rather
+than sudden cut/restore — which is the intended behaviour.
+
+> **Note:** The VCU queries the **activate** thresholds at startup (`0x0004`, `0x0008`). The
+> EMUS also has corresponding deactivate thresholds (`0x0005`, `0x0009`) which are not
+> queried. The activate values are used as the band boundaries in the proportional calculation.
+> The difference between activate and deactivate thresholds is typically ≤ 100 mV, so this
+> is a minor approximation.
 
 ---
 
