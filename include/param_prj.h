@@ -30,227 +30,229 @@
 //Next param id (increase when adding new parameter!): 140
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
-    PARAM_ENTRY(CAT_SETUP,     Inverter,     INVMODES, 0,      8,      0,      5  ) \
-    PARAM_ENTRY(CAT_SETUP,     Vehicle,      VEHMODES, 0,      8,      0,      6  ) \
-    PARAM_ENTRY(CAT_SETUP,     GearLvr,      SHIFTERS, 0,      4,      0,      108 ) \
-    PARAM_ENTRY(CAT_SETUP,     Transmission, TRNMODES, 0,      1,      0,      78 ) \
-    PARAM_ENTRY(CAT_SETUP,     interface,    CHGINT,    0,     4,      0,      39 ) \
-    PARAM_ENTRY(CAT_SETUP,     chargemodes,  CHGMODS,   0,     6,      0,      37 ) \
-    PARAM_ENTRY(CAT_SETUP,     BMS_Mode,    BMSMODES,  0,      6,      0,      90 ) \
-    PARAM_ENTRY(CAT_SETUP,     ShuntType,   SHNTYPE,   0,      3,      0,      88 ) \
-    PARAM_ENTRY(CAT_SETUP,     InverterCan,  CAN_DEV,  0,      1,      0,      70 ) \
-    PARAM_ENTRY(CAT_SETUP,     VehicleCan,   CAN_DEV,  0,      1,      1,      71 ) \
-    PARAM_ENTRY(CAT_SETUP,     ShuntCan,     CAN_DEV,  0,      1,      0,      72 ) \
-    PARAM_ENTRY(CAT_SETUP,     LimCan,       CAN_DEV,  0,      1,      0,      73 ) \
-    PARAM_ENTRY(CAT_SETUP,     ChargerCan,   CAN_DEV,  0,      1,      1,      74 ) \
-    PARAM_ENTRY(CAT_SETUP,     BMSCan,       CAN_DEV,  0,      1,      1,      89 ) \
-    PARAM_ENTRY(CAT_SETUP,     OBD2Can,      CAN_DEV,  0,      1,      0,      96 ) \
-    PARAM_ENTRY(CAT_SETUP,     CanMapCan,    CAN_DEV,  0,      1,      0,      97 ) \
-    PARAM_ENTRY(CAT_SETUP,     DCDCCan,      CAN_DEV,  0,      1,      1,      107 ) \
-    PARAM_ENTRY(CAT_SETUP,     HeaterCan,    CAN_DEV,  0,      1,      1,      138 ) \
-    PARAM_ENTRY(CAT_SETUP,     MotActive,    MotorsAct,0,      3,      0,      129 ) \
-    PARAM_ENTRY(CAT_SETUP,     SpeedFactor, "RevInv/RevWheel", 0, 500, 84,     900 ) \
-    PARAM_ENTRY(CAT_SETUP,     IMD_Type,     IMDTYPE,  0,      2,      0,      901)  \
-    PARAM_ENTRY(CAT_THROTTLE,  potmin,      "dig",     0,      4095,   0,      7  ) \
-    PARAM_ENTRY(CAT_THROTTLE,  potmax,      "dig",     0,      4095,   4095,   8  ) \
-    PARAM_ENTRY(CAT_THROTTLE,  pot2min,     "dig",     0,      4095,   4095,   9  ) \
-    PARAM_ENTRY(CAT_THROTTLE,  pot2max,     "dig",     0,      4095,   4095,   10 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  regenrpm,    "rpm",    100,      10000,    1500,     60 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  regenendrpm,"rpm",     100,      10000,  100,  126 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  regenmax,     "%",     -35,   0,     -10,     61 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  regenBrake,    "%",    -35,   0,     -10,     122 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  regenramp,   "%/10ms",  0.1,    100,    1,    68 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  potmode,     POTMODES,  0,      1,      0,      11 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  dirmode,     DIRMODES,  0,      4,      1,      12 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  reversemotor,  ONOFF,   0,      1,      0,      127 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  throtramp,   "%/10ms",  1,    100,    10,    13 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  throtramprpm,"rpm",     0,      20000,  20000,  14 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  revlim,      "rpm",     0,      20000,  6000,   15 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  revRegen,     ONOFF,    0,       1,      0,      137 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  udcmin,      "V",       0,      1000,   450,    19 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  udclim,      "V",       0,      1000,   520,    20 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  idcmax,      "A",       0,      5000,   5000,   21 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  idcmin,      "A",      -5000,   0,     -5000,   22 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  tmphsmax,    "°C",      50,     150,    85,     23 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  tmpmmax,     "°C",      70,     300,    300,    24 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  throtmax,    "%",       0,      100,    100,    25 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  throtmin,    "%",      -100,    0,     -100,    26 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  throtmaxRev,    "%",       0,      100,    30,    123 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  throtdead,   "%",       0,      50,     10,     76 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  RegenBrakeLight,   "%",    -100,     0,     -15,      128 ) \
-    PARAM_ENTRY(CAT_THROTTLE,  throtrpmfilt,   "rpm/10ms",  0.1,    200,    15,    131 ) \
-    PARAM_ENTRY(CAT_LEXUS,     Gear,        LOWHIGH,   0,      3,      0,      27 ) \
-    PARAM_ENTRY(CAT_LEXUS,     OilPump,     "%",       0,      100,    50,     28 ) \
-    PARAM_ENTRY(CAT_CRUISE,    cruisestep,  "rpm",     1,      1000,   200,    29 ) \
-    PARAM_ENTRY(CAT_CRUISE,    cruiseramp,  "rpm/100ms",1,     1000,   20,     30 ) \
-    PARAM_ENTRY(CAT_CRUISE,    regenlevel,  "",        0,      3,      2,      31 ) \
-    PARAM_ENTRY(CAT_CONTACT,   udcsw,       "V",       0,      1000,   330,    32 ) \
-    PARAM_ENTRY(CAT_CONTACT,   cruiselight, ONOFF,     0,      1,      0,      33 ) \
-    PARAM_ENTRY(CAT_CONTACT,   errlights,   ERRLIGHTS, 0,      255,    0,      34 ) \
-    PARAM_ENTRY(CAT_COMM,      CAN3Speed,   CAN3SPD,   0,      2,      0,      77 ) \
-    PARAM_ENTRY(CAT_CHARGER,   BattCap,     "kWh",     0.1,    250,    22,     38 ) \
-    PARAM_ENTRY(CAT_CHARGER,   Voltspnt,    "V",       0,      1000,   395,    40 ) \
-    PARAM_ENTRY(CAT_CHARGER,   Pwrspnt,     "W",       0,      12000,  1500,   41 ) \
-    PARAM_ENTRY(CAT_CHARGER,   IdcTerm,     "A",       0,      150,    0,      56 ) \
-    PARAM_ENTRY(CAT_CHARGER,   CCS_ICmd,    "A",       0,      150,    0,      42 ) \
-    PARAM_ENTRY(CAT_CHARGER,   CCS_ILim,    "A",       0,      350,    100,    43 ) \
-    PARAM_ENTRY(CAT_CHARGER,   CCS_SOCLim,  "%",       0,      100,    80,     44 ) \
-    PARAM_ENTRY(CAT_CHARGER,   SOCFC,       "%",       0,      100,    50,     79 ) \
-    PARAM_ENTRY(CAT_CHARGER,   Chgctrl,     CHGCTRL,   0,      2,      0,      45 ) \
-    PARAM_ENTRY(CAT_CHARGER,   ChgAcVolt,   "Vac",     0,      250,   240,     120 ) \
-    PARAM_ENTRY(CAT_CHARGER,   ChgEff,     "%",       0,      100,   90,      121) \
-    PARAM_ENTRY(CAT_CHARGER,   ConfigFoccci,  ONOFF,     0,      1,      0,     133) \
-    PARAM_ENTRY(CAT_DCDC,      DCdc_Type,   DCDCTYPES, 0,      1,      0,      105 ) \
-    PARAM_ENTRY(CAT_DCDC,      DCSetPnt,    "V",       9,      15,     14,     106 ) \
-    PARAM_ENTRY(CAT_BMS,       BMS_Timeout,  "sec",    1,      120,    10,     91 ) \
-    PARAM_ENTRY(CAT_BMS,       BMS_VminLimit, "V",     0,      10,     3.0,    92 ) \
-    PARAM_ENTRY(CAT_BMS,       BMS_VmaxLimit, "V",     0,      10,     4.2,    93 ) \
-    PARAM_ENTRY(CAT_BMS,       BMS_TminLimit, "°C",    -100,   100,    5,      94 ) \
-    PARAM_ENTRY(CAT_BMS,       BMS_TmaxLimit, "°C",    -100,   100,    50,     95 ) \
-    PARAM_ENTRY(CAT_HEATER,    Heater,      HTTYPE,    0,      3,      0,      57 ) \
-    PARAM_ENTRY(CAT_HEATER,    Control,     HTCTRL,    0,      2,      0,      58 ) \
-    PARAM_ENTRY(CAT_HEATER,    HeatPwr,     "W",       0,      6500,   0,      59 ) \
-    PARAM_ENTRY(CAT_HEATER,    HeatPercnt,  "%",       0,      100,    0,      124 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Set_Day,     DOW,       0,      6,      0,      46 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Set_Hour,    "Hours",   0,      23,     0,      47 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Set_Min,     "Mins",    0,      59,     0,      48 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Set_Sec,     "Secs",    0,      59,     0,      49 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Chg_Hrs,     "Hours",   0,      23,     0,      50 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Chg_Min,     "Mins",    0,      59,     0,      51 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Chg_Dur,     "Mins",    0,      600,    0,      52 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Pre_Hrs,     "Hours",   0,      59,     0,      53 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Pre_Min,     "Mins",    0,      59,     0,      54 ) \
-    PARAM_ENTRY(CAT_CLOCK,     Pre_Dur,     "Mins",    0,      60,     0,      55 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PumpPWM,    PumpOutType,0,      1,      0,      135 ) \
-    PARAM_ENTRY(CAT_IOPINS,    Out1Func,    PINFUNCS,  0,      20,     6,      80 ) \
-    PARAM_ENTRY(CAT_IOPINS,    Out2Func,    PINFUNCS,  0,      20,     7,      81 ) \
-    PARAM_ENTRY(CAT_IOPINS,    Out3Func,    PINFUNCS,  0,      20,     3,      82 ) \
-    PARAM_ENTRY(CAT_IOPINS,    SL1Func,     PINFUNCS,  0,      20,     0,      83 ) \
-    PARAM_ENTRY(CAT_IOPINS,    SL2Func,     PINFUNCS,  0,      20,     0,      84 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PWM1Func,    PINFUNCS,  0,      20,     0,      85 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PWM2Func,    PINFUNCS,  0,      20,     4,      86 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PWM3Func,    PINFUNCS,  0,      20,     2,      87 ) \
-    PARAM_ENTRY(CAT_IOPINS,    GP12VInFunc, PINFUNCS,  0,      20,     12,     98 ) \
-    PARAM_ENTRY(CAT_IOPINS,    HVReqFunc,   PINFUNCS,  0,      20,     12,     99 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PB1InFunc,   PINFUNCS,  0,      20,     12,     140 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PB2InFunc,   PINFUNCS,  0,      20,     12,     141 ) \
-    PARAM_ENTRY(CAT_IOPINS,    PB3InFunc,   PINFUNCS,  0,      20,     12,     142 ) \
-    PARAM_ENTRY(CAT_IOPINS,    GPA1Func,    APINFUNCS, 0,      3,      0,      110 ) \
-    PARAM_ENTRY(CAT_IOPINS,    GPA2Func,    APINFUNCS, 0,      3,      0,      111 ) \
-    PARAM_ENTRY(CAT_IOPINS,    ppthresh,    "dig",     0,      4095,   2500,   114 ) \
-    PARAM_ENTRY(CAT_IOPINS,    BrkVacThresh,"dig",     0,      4095,   2500,   115 ) \
-    PARAM_ENTRY(CAT_IOPINS,    BrkVacHyst,  "dig",     0,      4095,   2500,   116 ) \
-    PARAM_ENTRY(CAT_IOPINS,    DigiPot1Step,"dig",     0,      255,    0,      117 ) \
-    PARAM_ENTRY(CAT_IOPINS,    DigiPot2Step,"dig",     0,      255,    0,      118 ) \
-    PARAM_ENTRY(CAT_IOPINS,    FanTemp,     "°C",      0,      100,    40,     134 ) \
-    PARAM_ENTRY(CAT_IOPINS,    TachoPPR,    "PPR",     0,      100,    2,      136 ) \
-    PARAM_ENTRY(CAT_SHUNT,     IsaInit,     ONOFF,     0,      1,      0,      75 ) \
-    PARAM_ENTRY(CAT_PWM,       Tim3_Presc,  "",        1,      72000,  719,    100 ) \
-    PARAM_ENTRY(CAT_PWM,       Tim3_Period, "",        1,      100000, 7200,   101 ) \
-    PARAM_ENTRY(CAT_PWM,       Tim3_1_OC,   "",        1,      100000, 3600,   102 ) \
-    PARAM_ENTRY(CAT_PWM,       Tim3_2_OC,   "",        1,      100000, 3600,   103 ) \
-    PARAM_ENTRY(CAT_PWM,       Tim3_3_OC,   "",        1,      100000, 3600,   104 ) \
-    PARAM_ENTRY(CAT_PWM,       CP_PWM,   "",        1,      100, 10,   132 ) \
-    VALUE_ENTRY(version,       VERSTR,              2000 ) \
-    VALUE_ENTRY(opmode,        OPMODES,             2002 ) \
-    VALUE_ENTRY(chgtyp,        CHGTYPS,             2003 ) \
-    VALUE_ENTRY(lasterr,       errorListString,     2004 ) \
-    VALUE_ENTRY(status,        STATUS,              2005 ) \
-	VALUE_ENTRY(CanAct,        ONOFF,               2107 ) \
-    VALUE_ENTRY(TorqDerate,    LIMITREASON,         2102 ) \
-    VALUE_ENTRY(udc,           "V",                 2006 ) \
-    VALUE_ENTRY(udc2,          "V",                 2007 ) \
-    VALUE_ENTRY(udc3,          "V",                 2008 ) \
-    VALUE_ENTRY(deltaV,        "V",                 2009 ) \
-    VALUE_ENTRY(INVudc,        "V",                 2010 ) \
-    VALUE_ENTRY(power,         "kW",                2011 ) \
-    VALUE_ENTRY(idc,           "A",                 2012 ) \
-    VALUE_ENTRY(KWh,           "kwh",               2013 ) \
-    VALUE_ENTRY(range,         "km",                9002 ) \
-    VALUE_ENTRY(consumption,   "Wh/km",             9003 ) \
-    VALUE_ENTRY(AMPh,          "Ah",                2014 ) \
-    VALUE_ENTRY(SOC,           "%",                 2015 ) \
-    VALUE_ENTRY(BMS_Vmin,      "V",                 2084 ) \
-    VALUE_ENTRY(BMS_Vmax,      "V",                 2085 ) \
-    VALUE_ENTRY(BMS_Tavg,      "°C",                2103 ) \
-    VALUE_ENTRY(BMS_Tmin,      "°C",                2086 ) \
-    VALUE_ENTRY(BMS_Tmax,      "°C",                2087 ) \
-    VALUE_ENTRY(BMS_ChargeLim, "A",                 2088 ) \
-    VALUE_ENTRY(BMS_MaxInput,  "kW",                2105 ) \
-    VALUE_ENTRY(BMS_MaxOutput, "kW",                2106 ) \
-    VALUE_ENTRY(BMS_MaxCharge, "W",                 2101 ) \
-    VALUE_ENTRY(BMS_Isolation, "Ohm",               2104 ) \
-    VALUE_ENTRY(BMS_IsoMeas,   "mV",                2099 ) \
-    VALUE_ENTRY(speed,         "rpm",               2016 ) \
-    VALUE_ENTRY(Veh_Speed,     "kph",               2017 ) \
-    VALUE_ENTRY(torque,        "dig",               2018 ) \
-    VALUE_ENTRY(pot,           "dig",               2019 ) \
-    VALUE_ENTRY(pot2,          "dig",               2020 ) \
-    VALUE_ENTRY(potbrake,      "dig",               2021 ) \
-    VALUE_ENTRY(brakepressure, "dig",               2022 ) \
-    VALUE_ENTRY(potnom,        "%",                 2023 ) \
-    VALUE_ENTRY(dir,           DIRS,                2024 ) \
-    VALUE_ENTRY(tmphs,         "°C",                2028 ) \
-    VALUE_ENTRY(tmpm,          "°C",                2029 ) \
-    VALUE_ENTRY(tmpaux,        "°C",                2030 ) \
-    VALUE_ENTRY(uaux,          "V",                 2031 ) \
-    VALUE_ENTRY(canio,         CANIOS,              2032 ) \
-    VALUE_ENTRY(FrontRearBal,  "%",                 2082 ) \
-    VALUE_ENTRY(cruisespeed,   "rpm",               2033 ) \
-    VALUE_ENTRY(cruisestt,     CRUISESTATES,        2034 ) \
-    VALUE_ENTRY(din_cruise,    ONOFF,               2035 ) \
-    VALUE_ENTRY(din_start,     ONOFF,               2036 ) \
-    VALUE_ENTRY(din_brake,     ONOFF,               2037 ) \
-    VALUE_ENTRY(din_forward,   ONOFF,               2038 ) \
-    VALUE_ENTRY(din_reverse,   ONOFF,               2039 ) \
-    VALUE_ENTRY(din_bms,       ONOFF,               2040 ) \
-    VALUE_ENTRY(din_12Vgp,     ONOFF,               2071 ) \
-    VALUE_ENTRY(handbrk,       ONOFF,               2041 ) \
-    VALUE_ENTRY(Gear1,         ONOFF,               2042 ) \
-    VALUE_ENTRY(Gear2,         ONOFF,               2043 ) \
-    VALUE_ENTRY(Gear3,         ONOFF,               2044 ) \
-    VALUE_ENTRY(T15Stat,       ONOFF,               2045 ) \
-    VALUE_ENTRY(InvStat,       ONOFF,               2046 ) \
-    VALUE_ENTRY(GearFB,        LOWHIGH,             2047 ) \
-    VALUE_ENTRY(CableLim,      "A",                 2048 ) \
-    VALUE_ENTRY(PilotLim,      "A",                 2049 ) \
-    VALUE_ENTRY(PlugDet,       ONOFF,               2050 ) \
-    VALUE_ENTRY(PilotTyp,      PLTMODES,            2051 ) \
-    VALUE_ENTRY(CCS_I_Avail,   "A",                 2052 ) \
-    VALUE_ENTRY(CCS_V_Avail,   "V",                 2053 ) \
-    VALUE_ENTRY(CCS_I,         "A",                 2054 ) \
-    VALUE_ENTRY(CCS_Ireq,      "A",                 2068 ) \
-    VALUE_ENTRY(CCS_V,         "V",                 2055 ) \
-    VALUE_ENTRY(CCS_V_Min,     "V",                 2056 ) \
-    VALUE_ENTRY(CCS_V_Con,     "V",                 2057 ) \
-    VALUE_ENTRY(hvChg,         ONOFF,               2058 ) \
-    VALUE_ENTRY(CCS_COND,      CCS_STATUS,          2059 ) \
-    VALUE_ENTRY(CCS_State,     "s",                 2060 ) \
-    VALUE_ENTRY(CP_DOOR,       DMODES,              2061 ) \
-    VALUE_ENTRY(CCS_Contactor, ONOFF,               2062 ) \
-    VALUE_ENTRY(Day,           DOW,                 2064 ) \
-    VALUE_ENTRY(Hour,          "H",                 2065 ) \
-    VALUE_ENTRY(Min,           "M",                 2066 ) \
-    VALUE_ENTRY(Sec,           "S",                 2067 ) \
-    VALUE_ENTRY(ChgT,          "M",                 2090 ) \
-    VALUE_ENTRY(HeatReq,       ONOFF,               2069 ) \
-    VALUE_ENTRY(U12V,          "V",                 2070 ) \
-    VALUE_ENTRY(I12V,          "A",                 2083 ) \
-    VALUE_ENTRY(ChgTemp,       "°C",                2078 ) \
-    VALUE_ENTRY(AC_Volts,      "V",                 2079 ) \
-    VALUE_ENTRY(AC_Amps,       "A",                 2089 ) \
-    VALUE_ENTRY(canctr,        "dig",               2091 ) \
-    VALUE_ENTRY(cpuload,       "%",                 2063 ) \
-    VALUE_ENTRY(PPVal,         "dig",               2094 ) \
-    VALUE_ENTRY(BrkVacVal,     "dig",               2095 ) \
-    VALUE_ENTRY(tmpheater,     "°C",                2096 ) \
-    VALUE_ENTRY(udcheater,     "V",                 2097 ) \
-    VALUE_ENTRY(powerheater,   "W",                 2098 ) \
-    VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) \
+    PARAM_ENTRY(CAT_SETUP,     Inverter,     INVMODES, 0,      8,      0,      5  ) /* inverter type */ \
+    PARAM_ENTRY(CAT_SETUP,     Vehicle,      VEHMODES, 0,      8,      0,      6  ) /* vehicle platform */ \
+    PARAM_ENTRY(CAT_SETUP,     GearLvr,      SHIFTERS, 0,      4,      0,      108 ) /* gear lever/shifter type */ \
+    PARAM_ENTRY(CAT_SETUP,     Transmission, TRNMODES, 0,      1,      0,      78 ) /* transmission type */ \
+    PARAM_ENTRY(CAT_SETUP,     interface,    CHGINT,    0,     4,      0,      39 ) /* EVSE pilot/charge interface type */ \
+    PARAM_ENTRY(CAT_SETUP,     chargemodes,  CHGMODS,   0,     6,      0,      37 ) /* onboard charger type */ \
+    PARAM_ENTRY(CAT_SETUP,     BMS_Mode,    BMSMODES,  0,      6,      0,      90 ) /* selects active BMS driver */ \
+    PARAM_ENTRY(CAT_SETUP,     ShuntType,   SHNTYPE,   0,      3,      0,      88 ) /* current shunt module type */ \
+    PARAM_ENTRY(CAT_SETUP,     InverterCan,  CAN_DEV,  0,      1,      0,      70 ) /* CAN bus for inverter */ \
+    PARAM_ENTRY(CAT_SETUP,     VehicleCan,   CAN_DEV,  0,      1,      1,      71 ) /* CAN bus for vehicle */ \
+    PARAM_ENTRY(CAT_SETUP,     ShuntCan,     CAN_DEV,  0,      1,      0,      72 ) /* CAN bus for current shunt */ \
+    PARAM_ENTRY(CAT_SETUP,     LimCan,       CAN_DEV,  0,      1,      0,      73 ) /* CAN bus for current limiter */ \
+    PARAM_ENTRY(CAT_SETUP,     ChargerCan,   CAN_DEV,  0,      1,      1,      74 ) /* CAN bus for charger */ \
+    PARAM_ENTRY(CAT_SETUP,     BMSCan,       CAN_DEV,  0,      1,      1,      89 ) /* CAN bus for BMS */ \
+    PARAM_ENTRY(CAT_SETUP,     OBD2Can,      CAN_DEV,  0,      1,      0,      96 ) /* CAN bus for OBD2 */ \
+    PARAM_ENTRY(CAT_SETUP,     CanMapCan,    CAN_DEV,  0,      1,      0,      97 ) /* CAN bus for CAN mapper */ \
+    PARAM_ENTRY(CAT_SETUP,     DCDCCan,      CAN_DEV,  0,      1,      1,      107 ) /* CAN bus for DC-DC converter */ \
+    PARAM_ENTRY(CAT_SETUP,     HeaterCan,    CAN_DEV,  0,      1,      1,      138 ) /* CAN bus for heater */ \
+    PARAM_ENTRY(CAT_SETUP,     MotActive,    MotorsAct,0,      3,      0,      129 ) /* active motor selection (MG1, MG2 or both) */ \
+    PARAM_ENTRY(CAT_THROTTLE,  potmin,      "dig",     0,      4095,   0,      7  ) /* throttle pot ADC minimum */ \
+    PARAM_ENTRY(CAT_THROTTLE,  potmax,      "dig",     0,      4095,   4095,   8  ) /* throttle pot ADC maximum */ \
+    PARAM_ENTRY(CAT_THROTTLE,  pot2min,     "dig",     0,      4095,   4095,   9  ) /* second throttle pot ADC minimum (dual-channel) */ \
+    PARAM_ENTRY(CAT_THROTTLE,  pot2max,     "dig",     0,      4095,   4095,   10 ) /* second throttle pot ADC maximum (dual-channel) */ \
+    PARAM_ENTRY(CAT_THROTTLE,  regenrpm,    "rpm",    100,      10000,    1500,     60 ) /* RPM above which regen activates */ \
+    PARAM_ENTRY(CAT_THROTTLE,  regenendrpm,"rpm",     100,      10000,  100,  126 ) /* RPM below which regen disengages */ \
+    PARAM_ENTRY(CAT_THROTTLE,  regenmax,     "%",     -35,   0,     -10,     61 ) /* maximum regen torque % */ \
+    PARAM_ENTRY(CAT_THROTTLE,  regenBrake,    "%",    -35,   0,     -10,     122 ) /* regen torque when brake is pressed */ \
+    PARAM_ENTRY(CAT_THROTTLE,  regenramp,   "%/10ms",  0.1,    100,    1,    68 ) /* regen ramp rate */ \
+    PARAM_ENTRY(CAT_THROTTLE,  potmode,     POTMODES,  0,      1,      0,      11 ) /* single or dual-channel throttle pot */ \
+    PARAM_ENTRY(CAT_THROTTLE,  dirmode,     DIRMODES,  0,      4,      1,      12 ) /* direction input method */ \
+    PARAM_ENTRY(CAT_THROTTLE,  reversemotor,  ONOFF,   0,      1,      0,      127 ) /* invert motor rotation direction */ \
+    PARAM_ENTRY(CAT_THROTTLE,  throtramp,   "%/10ms",  1,    100,    10,    13 ) /* forward throttle ramp rate */ \
+    PARAM_ENTRY(CAT_THROTTLE,  throtramprpm,"rpm",     0,      20000,  20000,  14 ) /* RPM above which throtramp is bypassed */ \
+    PARAM_ENTRY(CAT_THROTTLE,  revlim,      "rpm",     0,      20000,  6000,   15 ) /* motor RPM limit */ \
+    PARAM_ENTRY(CAT_THROTTLE,  revRegen,     ONOFF,    0,       1,      0,      137 ) /* enable regen in reverse direction */ \
+    PARAM_ENTRY(CAT_THROTTLE,  udcmin,      "V",       0,      1000,   450,    19 ) /* DC bus voltage below which torque is derated */ \
+    PARAM_ENTRY(CAT_THROTTLE,  udclim,      "V",       0,      1000,   520,    20 ) /* DC bus voltage above which regen is limited */ \
+    PARAM_ENTRY(CAT_THROTTLE,  idcmax,      "A",       0,      5000,   5000,   21 ) /* DC current above which torque is derated */ \
+    PARAM_ENTRY(CAT_THROTTLE,  idcmin,      "A",      -5000,   0,     -5000,   22 ) /* DC current below which regen is limited */ \
+    PARAM_ENTRY(CAT_THROTTLE,  tmphsmax,    "°C",      50,     150,    85,     23 ) /* heatsink temperature limit for derate */ \
+    PARAM_ENTRY(CAT_THROTTLE,  tmpmmax,     "°C",      70,     300,    300,    24 ) /* motor temperature limit for derate */ \
+    PARAM_ENTRY(CAT_THROTTLE,  throtmax,    "%",       0,      100,    100,    25 ) /* maximum forward throttle % */ \
+    PARAM_ENTRY(CAT_THROTTLE,  throtmin,    "%",      -100,    0,     -100,    26 ) /* maximum regen throttle % */ \
+    PARAM_ENTRY(CAT_THROTTLE,  throtmaxRev,    "%",       0,      100,    30,    123 ) /* maximum reverse throttle % */ \
+    PARAM_ENTRY(CAT_THROTTLE,  throtdead,   "%",       0,      50,     10,     76 ) /* throttle deadband around zero */ \
+    PARAM_ENTRY(CAT_THROTTLE,  RegenBrakeLight,   "%",    -100,     0,     -15,      128 ) /* throttle % below which brake light activates */ \
+    PARAM_ENTRY(CAT_THROTTLE,  throtrpmfilt,   "rpm/10ms",  0.1,    200,    15,    131 ) /* RPM filter time constant for throttle */ \
+    PARAM_ENTRY(CAT_LEXUS,     Gear,        LOWHIGH,   0,      3,      0,      27 ) /* Lexus/GS450H gearbox gear selection */ \
+    PARAM_ENTRY(CAT_LEXUS,     OilPump,     "%",       0,      100,    50,     28 ) /* Lexus/GS450H oil pump duty cycle */ \
+    PARAM_ENTRY(CAT_CRUISE,    cruisestep,  "rpm",     1,      1000,   200,    29 ) /* cruise control RPM increment per button press */ \
+    PARAM_ENTRY(CAT_CRUISE,    cruiseramp,  "rpm/100ms",1,     1000,   20,     30 ) /* cruise control ramp rate */ \
+    PARAM_ENTRY(CAT_CRUISE,    regenlevel,  "",        0,      3,      2,      31 ) /* regen level when cruise is active */ \
+    PARAM_ENTRY(CAT_CONTACT,   udcsw,       "V",       0,      1000,   330,    32 ) /* DC voltage threshold to close main contactors */ \
+    PARAM_ENTRY(CAT_CONTACT,   cruiselight, ONOFF,     0,      1,      0,      33 ) /* enable cruise control indicator output */ \
+    PARAM_ENTRY(CAT_CONTACT,   errlights,   ERRLIGHTS, 0,      255,    0,      34 ) /* error indicator light output bitmask */ \
+    PARAM_ENTRY(CAT_COMM,      CAN3Speed,   CAN3SPD,   0,      2,      0,      77 ) /* third CAN bus speed */ \
+    PARAM_ENTRY(CAT_CHARGER,   BattCap,     "kWh",     0.1,    250,    22,     38 ) /* battery pack capacity for energy tracking */ \
+    PARAM_ENTRY(CAT_CHARGER,   Voltspnt,    "V",       0,      1000,   395,    40 ) /* target charge voltage */ \
+    PARAM_ENTRY(CAT_CHARGER,   Pwrspnt,     "W",       0,      12000,  1500,   41 ) /* charge power setpoint */ \
+    PARAM_ENTRY(CAT_CHARGER,   IdcTerm,     "A",       0,      150,    0,      56 ) /* charge termination current (CC/CV transition) */ \
+    PARAM_ENTRY(CAT_CHARGER,   CCS_ICmd,    "A",       0,      150,    0,      42 ) /* CCS charge current command */ \
+    PARAM_ENTRY(CAT_CHARGER,   CCS_ILim,    "A",       0,      350,    100,    43 ) /* CCS maximum current limit */ \
+    PARAM_ENTRY(CAT_CHARGER,   CCS_SOCLim,  "%",       0,      100,    80,     44 ) /* CCS charge SOC limit */ \
+    PARAM_ENTRY(CAT_CHARGER,   SOCFC,       "%",       0,      100,    50,     79 ) /* SOC at which full charge is indicated */ \
+    PARAM_ENTRY(CAT_CHARGER,   Chgctrl,     CHGCTRL,   0,      2,      0,      45 ) /* charge control mode */ \
+    PARAM_ENTRY(CAT_CHARGER,   ChgAcVolt,   "Vac",     0,      250,   240,     120 ) /* AC supply voltage for efficiency calculation */ \
+    PARAM_ENTRY(CAT_CHARGER,   ChgEff,     "%",       0,      100,   90,      121) /* charger efficiency % for power calculation */ \
+    PARAM_ENTRY(CAT_CHARGER,   ConfigFoccci,  ONOFF,     0,      1,      0,     133) /* enable Foccci EVSE communication */ \
+    PARAM_ENTRY(CAT_DCDC,      DCdc_Type,   DCDCTYPES, 0,      1,      0,      105 ) /* DC-DC converter type */ \
+    PARAM_ENTRY(CAT_DCDC,      DCSetPnt,    "V",       9,      15,     14,     106 ) /* DC-DC output voltage setpoint */ \
+    PARAM_ENTRY(CAT_BMS,       BMS_Timeout,  "sec",    1,      120,    10,     91 ) /* seconds without BMS frame before timeout */ \
+    PARAM_ENTRY(CAT_BMS,       BMS_VminLimit, "V",     0,      10,     3.0,    92 ) /* minimum cell voltage limit (non-EMUS BMS) */ \
+    PARAM_ENTRY(CAT_BMS,       BMS_VmaxLimit, "V",     0,      10,     4.2,    93 ) /* maximum cell voltage limit (non-EMUS BMS) */ \
+    PARAM_ENTRY(CAT_BMS,       BMS_TminLimit, "°C",    -100,   100,    5,      94 ) /* minimum cell temperature limit (non-EMUS BMS) */ \
+    PARAM_ENTRY(CAT_BMS,       BMS_TmaxLimit, "°C",    -100,   100,    50,     95 ) /* maximum cell temperature limit (non-EMUS BMS) */ \
+    PARAM_ENTRY(CAT_HEATER,    Heater,      HTTYPE,    0,      3,      0,      57 ) /* heater module type */ \
+    PARAM_ENTRY(CAT_HEATER,    Control,     HTCTRL,    0,      2,      0,      58 ) /* heater control mode */ \
+    PARAM_ENTRY(CAT_HEATER,    HeatPwr,     "W",       0,      6500,   0,      59 ) /* heater power setpoint */ \
+    PARAM_ENTRY(CAT_HEATER,    HeatPercnt,  "%",       0,      100,    0,      124 ) /* heater duty cycle % */ \
+    PARAM_ENTRY(CAT_CLOCK,     Set_Day,     DOW,       0,      6,      0,      46 ) /* set current day of week */ \
+    PARAM_ENTRY(CAT_CLOCK,     Set_Hour,    "Hours",   0,      23,     0,      47 ) /* set current hour */ \
+    PARAM_ENTRY(CAT_CLOCK,     Set_Min,     "Mins",    0,      59,     0,      48 ) /* set current minute */ \
+    PARAM_ENTRY(CAT_CLOCK,     Set_Sec,     "Secs",    0,      59,     0,      49 ) /* set current second */ \
+    PARAM_ENTRY(CAT_CLOCK,     Chg_Hrs,     "Hours",   0,      23,     0,      50 ) /* scheduled charge start hour */ \
+    PARAM_ENTRY(CAT_CLOCK,     Chg_Min,     "Mins",    0,      59,     0,      51 ) /* scheduled charge start minute */ \
+    PARAM_ENTRY(CAT_CLOCK,     Chg_Dur,     "Mins",    0,      600,    0,      52 ) /* scheduled charge duration */ \
+    PARAM_ENTRY(CAT_CLOCK,     Pre_Hrs,     "Hours",   0,      59,     0,      53 ) /* preheat start hour */ \
+    PARAM_ENTRY(CAT_CLOCK,     Pre_Min,     "Mins",    0,      59,     0,      54 ) /* preheat start minute */ \
+    PARAM_ENTRY(CAT_CLOCK,     Pre_Dur,     "Mins",    0,      60,     0,      55 ) /* preheat duration */ \
+    PARAM_ENTRY(CAT_IOPINS,    PumpPWM,    PumpOutType,0,      1,      0,      135 ) /* coolant pump output type */ \
+    PARAM_ENTRY(CAT_IOPINS,    Out1Func,    PINFUNCS,  0,      15,     6,      80 ) /* output pin 1 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    Out2Func,    PINFUNCS,  0,      15,     7,      81 ) /* output pin 2 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    Out3Func,    PINFUNCS,  0,      15,     3,      82 ) /* output pin 3 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    SL1Func,     PINFUNCS,  0,      15,     0,      83 ) /* signal light 1 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    SL2Func,     PINFUNCS,  0,      15,     0,      84 ) /* signal light 2 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    PWM1Func,    PINFUNCS,  0,      18,     0,      85 ) /* PWM output 1 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    PWM2Func,    PINFUNCS,  0,      18,     4,      86 ) /* PWM output 2 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    PWM3Func,    PINFUNCS,  0,      18,     2,      87 ) /* PWM output 3 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    GP12VInFunc, PINFUNCS,  0,      13,     12,     98 ) /* 12V general-purpose digital input function */ \
+    PARAM_ENTRY(CAT_IOPINS,    HVReqFunc,   PINFUNCS,  0,      13,     12,     99 ) /* HV request input function */ \
+    PARAM_ENTRY(CAT_IOPINS,    PB1InFunc,   PINFUNCS,  0,      13,     12,     140 ) /* pushbutton 1 input function */ \
+    PARAM_ENTRY(CAT_IOPINS,    PB2InFunc,   PINFUNCS,  0,      13,     12,     141 ) /* pushbutton 2 input function */ \
+    PARAM_ENTRY(CAT_IOPINS,    PB3InFunc,   PINFUNCS,  0,      13,     12,     142 ) /* pushbutton 3 input function */ \
+    PARAM_ENTRY(CAT_IOPINS,    GPA1Func,    APINFUNCS, 0,      2,      0,      110 ) /* analog input 1 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    GPA2Func,    APINFUNCS, 0,      2,      0,      111 ) /* analog input 2 function */ \
+    PARAM_ENTRY(CAT_IOPINS,    ppthresh,    "dig",     0,      4095,   2500,   114 ) /* proximity pilot ADC threshold */ \
+    PARAM_ENTRY(CAT_IOPINS,    BrkVacThresh,"dig",     0,      4095,   2500,   115 ) /* brake vacuum sensor ADC threshold */ \
+    PARAM_ENTRY(CAT_IOPINS,    BrkVacHyst,  "dig",     0,      4095,   2500,   116 ) /* brake vacuum sensor hysteresis */ \
+    PARAM_ENTRY(CAT_IOPINS,    DigiPot1Step,"dig",     0,      255,    0,      117 ) /* digital potentiometer 1 step value */ \
+    PARAM_ENTRY(CAT_IOPINS,    DigiPot2Step,"dig",     0,      255,    0,      118 ) /* digital potentiometer 2 step value */ \
+    PARAM_ENTRY(CAT_IOPINS,    FanTemp,     "°C",      0,      100,    40,     134 ) /* temperature to activate cooling fan */ \
+    PARAM_ENTRY(CAT_IOPINS,    TachoPPR,    "PPR",     0,      100,    2,      136 ) /* tacho pulses per revolution */ \
+    PARAM_ENTRY(CAT_SHUNT,     IsaInit,     ONOFF,     0,      1,      0,      75 ) /* trigger ISA shunt module initialization */ \
+    PARAM_ENTRY(CAT_PWM,       Tim3_Presc,  "",        1,      72000,  719,    100 ) /* Timer 3 prescaler */ \
+    PARAM_ENTRY(CAT_PWM,       Tim3_Period, "",        1,      100000, 7200,   101 ) /* Timer 3 period */ \
+    PARAM_ENTRY(CAT_PWM,       Tim3_1_OC,   "",        1,      100000, 3600,   102 ) /* Timer 3 channel 1 compare value */ \
+    PARAM_ENTRY(CAT_PWM,       Tim3_2_OC,   "",        1,      100000, 3600,   103 ) /* Timer 3 channel 2 compare value */ \
+    PARAM_ENTRY(CAT_PWM,       Tim3_3_OC,   "",        1,      100000, 3600,   104 ) /* Timer 3 channel 3 compare value */ \
+    PARAM_ENTRY(CAT_PWM,       CP_PWM,   "",        1,      100, 10,   132 ) /* charge pilot PWM duty cycle */ \
+    VALUE_ENTRY(version,       VERSTR,              2000 ) /* firmware version string */ \
+    VALUE_ENTRY(opmode,        OPMODES,             2002 ) /* current operating mode */ \
+    VALUE_ENTRY(chgtyp,        CHGTYPS,             2003 ) /* active charge type */ \
+    VALUE_ENTRY(lasterr,       errorListString,     2004 ) /* last error message */ \
+    VALUE_ENTRY(status,        STATUS,              2005 ) /* system status bitmask */ \
+	VALUE_ENTRY(CanAct,        ONOFF,               2107 ) /* CAN bus active */ \
+    VALUE_ENTRY(TorqDerate,    LIMITREASON,         2102 ) /* torque derating reason bitmask */ \
+    VALUE_ENTRY(udc,           "V",                 2006 ) /* main DC bus voltage */ \
+    VALUE_ENTRY(udc2,          "V",                 2007 ) /* BMS pack voltage */ \
+    VALUE_ENTRY(udc3,          "V",                 2008 ) /* auxiliary DC bus voltage */ \
+    VALUE_ENTRY(deltaV,        "V",                 2009 ) /* voltage difference between udc sources */ \
+    VALUE_ENTRY(INVudc,        "V",                 2010 ) /* inverter-reported DC bus voltage */ \
+    VALUE_ENTRY(power,         "kW",                2011 ) /* drive power (positive=discharge, negative=charge) */ \
+    VALUE_ENTRY(idc,           "A",                 2012 ) /* DC bus current */ \
+    VALUE_ENTRY(KWh,           "kwh",               2013 ) /* remaining energy */ \
+    VALUE_ENTRY(range,         "km",                9002 ) /* estimated remaining range */ \
+    VALUE_ENTRY(consumption,   "Wh/km",             9003 ) /* energy consumption */ \
+    VALUE_ENTRY(AMPh,          "Ah",                2014 ) /* amp-hours consumed */ \
+    VALUE_ENTRY(SOC,           "%",                 2015 ) /* state of charge */ \
+    VALUE_ENTRY(BMS_Vmin,      "V",                 2084 ) /* minimum cell voltage */ \
+    VALUE_ENTRY(BMS_Vmax,      "V",                 2085 ) /* maximum cell voltage */ \
+    VALUE_ENTRY(BMS_Tavg,      "°C",                2103 ) /* average cell temperature */ \
+    VALUE_ENTRY(BMS_Tmin,      "°C",                2086 ) /* minimum cell temperature */ \
+    VALUE_ENTRY(BMS_Tmax,      "°C",                2087 ) /* maximum cell temperature */ \
+    VALUE_ENTRY(BMS_ChargeLim, "A",                 2088 ) /* maximum charge current from BMS */ \
+    VALUE_ENTRY(BMS_MaxInput,  "kW",                2105 ) /* maximum input power from BMS */ \
+    VALUE_ENTRY(BMS_MaxOutput, "kW",                2106 ) /* maximum output power from BMS */ \
+    VALUE_ENTRY(BMS_MaxCharge, "W",                 2101 ) /* maximum charge power */ \
+    VALUE_ENTRY(BMS_Isolation, "Ohm",               2104 ) /* isolation resistance */ \
+    VALUE_ENTRY(BMS_IsoMeas,   "mV",                2099 ) /* isolation measurement voltage */ \
+    VALUE_ENTRY(BMS_DischargeOk,   ONOFF,           9005 ) /* 1=discharge allowed, 0=protection flag active BMS */ \
+    VALUE_ENTRY(BMS_DischargeLevel, "%",            9006 ) /* discharge torque multiplier 0-100%, written by BMS driver */ \
+    VALUE_ENTRY(BMS_UVProtThr,     "V",             9007 ) /* cell under-voltage protection threshold queried from BMS at startup */ \
+    VALUE_ENTRY(BMS_LowVRedThr,    "V",             9008 ) /* low cell voltage reduction threshold queried from BMS at startup */ \
+    VALUE_ENTRY(BMS_ProtSrc,       BMSPROTSRC,      9009 ) /* active (dis)charge protection source */ \
+    VALUE_ENTRY(speed,         "rpm",               2016 ) /* motor RPM */ \
+    VALUE_ENTRY(Veh_Speed,     "kph",               2017 ) /* vehicle speed */ \
+    VALUE_ENTRY(torque,        "dig",               2018 ) /* torque setpoint */ \
+    VALUE_ENTRY(pot,           "dig",               2019 ) /* throttle pot 1 ADC value */ \
+    VALUE_ENTRY(pot2,          "dig",               2020 ) /* throttle pot 2 ADC value */ \
+    VALUE_ENTRY(potbrake,      "dig",               2021 ) /* brake pot ADC value */ \
+    VALUE_ENTRY(brakepressure, "dig",               2022 ) /* brake pressure ADC value */ \
+    VALUE_ENTRY(potnom,        "%",                 2023 ) /* normalized throttle % after all limiting */ \
+    VALUE_ENTRY(dir,           DIRS,                2024 ) /* drive direction */ \
+    VALUE_ENTRY(tmphs,         "°C",                2028 ) /* heatsink temperature */ \
+    VALUE_ENTRY(tmpm,          "°C",                2029 ) /* motor temperature */ \
+    VALUE_ENTRY(tmpaux,        "°C",                2030 ) /* auxiliary temperature sensor */ \
+    VALUE_ENTRY(uaux,          "V",                 2031 ) /* auxiliary voltage */ \
+    VALUE_ENTRY(canio,         CANIOS,              2032 ) /* CAN digital I/O state bitmask */ \
+    VALUE_ENTRY(FrontRearBal,  "%",                 2082 ) /* front/rear torque balance */ \
+    VALUE_ENTRY(cruisespeed,   "rpm",               2033 ) /* cruise control target speed */ \
+    VALUE_ENTRY(cruisestt,     CRUISESTATES,        2034 ) /* cruise control state */ \
+    VALUE_ENTRY(din_cruise,    ONOFF,               2035 ) /* cruise control digital input */ \
+    VALUE_ENTRY(din_start,     ONOFF,               2036 ) /* start digital input */ \
+    VALUE_ENTRY(din_brake,     ONOFF,               2037 ) /* brake digital input */ \
+    VALUE_ENTRY(din_forward,   ONOFF,               2038 ) /* forward direction digital input */ \
+    VALUE_ENTRY(din_reverse,   ONOFF,               2039 ) /* reverse direction digital input */ \
+    VALUE_ENTRY(din_bms,       ONOFF,               2040 ) /* BMS digital input */ \
+    VALUE_ENTRY(din_12Vgp,     ONOFF,               2071 ) /* 12V general-purpose digital input */ \
+    VALUE_ENTRY(handbrk,       ONOFF,               2041 ) /* handbrake input */ \
+    VALUE_ENTRY(Gear1,         ONOFF,               2042 ) /* gear selector position 1 */ \
+    VALUE_ENTRY(Gear2,         ONOFF,               2043 ) /* gear selector position 2 */ \
+    VALUE_ENTRY(Gear3,         ONOFF,               2044 ) /* gear selector position 3 */ \
+    VALUE_ENTRY(T15Stat,       ONOFF,               2045 ) /* terminal 15 (ignition) status */ \
+    VALUE_ENTRY(InvStat,       ONOFF,               2046 ) /* inverter ready status */ \
+    VALUE_ENTRY(GearFB,        LOWHIGH,             2047 ) /* gearbox feedback position */ \
+    VALUE_ENTRY(CableLim,      "A",                 2048 ) /* charge cable current limit (from pilot) */ \
+    VALUE_ENTRY(PilotLim,      "A",                 2049 ) /* charge pilot current limit */ \
+    VALUE_ENTRY(PlugDet,       ONOFF,               2050 ) /* charge plug detection */ \
+    VALUE_ENTRY(PilotTyp,      PLTMODES,            2051 ) /* charge pilot type detected */ \
+    VALUE_ENTRY(CCS_I_Avail,   "A",                 2052 ) /* CCS available current */ \
+    VALUE_ENTRY(CCS_V_Avail,   "V",                 2053 ) /* CCS available voltage */ \
+    VALUE_ENTRY(CCS_I,         "A",                 2054 ) /* CCS actual charge current */ \
+    VALUE_ENTRY(CCS_Ireq,      "A",                 2068 ) /* CCS requested current */ \
+    VALUE_ENTRY(CCS_V,         "V",                 2055 ) /* CCS actual charge voltage */ \
+    VALUE_ENTRY(CCS_V_Min,     "V",                 2056 ) /* CCS minimum voltage */ \
+    VALUE_ENTRY(CCS_V_Con,     "V",                 2057 ) /* CCS contract voltage */ \
+    VALUE_ENTRY(hvChg,         ONOFF,               2058 ) /* HV charging active */ \
+    VALUE_ENTRY(CCS_COND,      CCS_STATUS,          2059 ) /* CCS condition/status */ \
+    VALUE_ENTRY(CCS_State,     "s",                 2060 ) /* CCS state machine timer */ \
+    VALUE_ENTRY(CP_DOOR,       DMODES,              2061 ) /* charge port door state */ \
+    VALUE_ENTRY(CCS_Contactor, ONOFF,               2062 ) /* CCS contactor state */ \
+    VALUE_ENTRY(Day,           DOW,                 2064 ) /* current day of week */ \
+    VALUE_ENTRY(Hour,          "H",                 2065 ) /* current hour */ \
+    VALUE_ENTRY(Min,           "M",                 2066 ) /* current minute */ \
+    VALUE_ENTRY(Sec,           "S",                 2067 ) /* current second */ \
+    VALUE_ENTRY(ChgT,          "M",                 2090 ) /* remaining charge time */ \
+    VALUE_ENTRY(HeatReq,       ONOFF,               2069 ) /* heater request active */ \
+    VALUE_ENTRY(U12V,          "V",                 2070 ) /* 12V supply voltage */ \
+    VALUE_ENTRY(I12V,          "A",                 2083 ) /* 12V supply current */ \
+    VALUE_ENTRY(ChgTemp,       "°C",                2078 ) /* charger temperature */ \
+    VALUE_ENTRY(AC_Volts,      "V",                 2079 ) /* AC supply voltage */ \
+    VALUE_ENTRY(AC_Amps,       "A",                 2089 ) /* AC supply current */ \
+    VALUE_ENTRY(canctr,        "dig",               2091 ) /* CAN error counter */ \
+    VALUE_ENTRY(cpuload,       "%",                 2063 ) /* CPU load */ \
+    VALUE_ENTRY(PPVal,         "dig",               2094 ) /* proximity pilot ADC value */ \
+    VALUE_ENTRY(BrkVacVal,     "dig",               2095 ) /* brake vacuum sensor ADC value */ \
+    VALUE_ENTRY(tmpheater,     "°C",                2096 ) /* heater temperature */ \
+    VALUE_ENTRY(udcheater,     "V",                 2097 ) /* heater supply voltage */ \
+    VALUE_ENTRY(powerheater,   "W",                 2098 ) /* heater power */ \
+    VALUE_ENTRY(VehLockSt,     ONOFF,               2100 ) /* vehicle lock state */
     VALUE_ENTRY(ImdFault,      ONOFF,               9000 ) \
     VALUE_ENTRY(ImdState,      IMDSTATE,            9001 ) \
-//Next value Id: 2108
-//Private DAALPO range starts at 9000
+//Next value Id: 2108  (next EMUS-specific value Id: 9010)
 
 //Dead params
 /*
@@ -276,6 +278,7 @@
 #define PLTMODES     "0=Absent, 1=ACStd, 2=ACchg, 3=Error, 4=CCS_Not_Rdy, 5=CCS_Rdy, 6=Static"
 #define VEHMODES     "0=BMW_E46, 1=BMW_E6x+, 2=Classic, 3=None, 5=BMW_E39, 6=VAG, 7=Subaru, 8=BMW_E31"
 #define BMSMODES     "0=Off, 1=SimpBMS, 2=TiDaisychainSingle, 3=TiDaisychainDual, 4=LeafBms, 5=RenaultKangoo33, 6=EMUS"
+#define BMSPROTSRC   "0=VCU, 1=BMS"
 #define OPMODES      "0=Off, 1=Run, 2=Precharge, 3=PchFail, 4=Charge"
 #define DOW          "0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat"
 #define CHGTYPS      "0=Off, 1=AC, 2=DCFC"

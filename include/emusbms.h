@@ -31,6 +31,10 @@ class EmusBMS: public BMS
       void DecodeCAN(int id, uint8_t * data) override;
       float MaxChargeCurrent() override;
       void Task100Ms() override;
+      bool DischargeAllowed() override;
+      float DischargeReductionLevel() override;
+      int ProtectionSource() override { return 1; };
+
    private:
       bool BMSDataValid();
       bool ChargeAllowed();
@@ -45,15 +49,33 @@ class EmusBMS: public BMS
       float remainingKWh = 0;
       float packVoltage = 0;
       float packCurrent = 0;
-      uint8_t diagByte0 = 0;        // diagnostic flags byte 0 from frame 0x307
-      uint8_t diagByte1 = 0;        // diagnostic flags byte 1 from frame 0x307
+
+      // Full 32-bit protection flags and reduction byte from frame 0x307
+      uint32_t protectionFlags = 0;
+      uint8_t  reductionFlags  = 0;
+
+      // Legacy byte accessors kept for ChargeAllowed() compatibility
+      uint8_t diagByte0 = 0;
+      uint8_t diagByte1 = 0;
 
       // J1939 charger mimic state (frames 0x1806E5F4 / 0x18FF50E5)
-      float   j1939ReqVoltage = 0;  // V,  EMUS requested charge voltage
-      float   j1939ReqCurrent = 0;  // A,  EMUS requested charge current
-      bool    j1939StopBit    = false; // true = EMUS requests stop charging
-      bool    j1939Active     = false; // true once 0x1806E5F4 has been received
-      int     j1939TxCounter  = 0;  // 100ms ticks until next 0x18FF50E5 transmit
+      float   j1939ReqVoltage = 0;
+      float   j1939ReqCurrent = 0;
+      bool    j1939StopBit    = false;
+      bool    j1939Active     = false;
+      int     j1939TxCounter  = 0;
 
+      // EMUS configuration thresholds queried at startup via 0x380 (Base+80h).
+      // param 0x0008: Low Cell Voltage Reduction Activate Value
+      // param 0x0004: Cell Under-Voltage Protection Activate Value
+      // Both encoded as uint8, 0.01 V/lsb, offset +200 (e.g. raw=80 → 2.80 V)
+      float lowCellVReductionThreshold = 0.0f;
+      float cellUVProtectionThreshold  = 0.0f;
+
+      // Startup query state machine — queries 0x0008 then 0x0004 once at power-on.
+      enum QueryState { QS_LOW_CELL_RED = 0, QS_UV_PROT, QS_DONE };
+      QueryState queryState    = QS_LOW_CELL_RED;
+      int        queryTimer    = 0; // counts 100 ms ticks between retries
 };
+
 #endif // EMUSBMS_H

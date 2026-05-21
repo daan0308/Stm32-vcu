@@ -41,6 +41,16 @@ class BMS
       virtual void DecodeCAN(int, uint8_t *) {};
       virtual void DeInit() {};
       virtual float MaxChargeCurrent() { return 9999.0; };
+      virtual bool DischargeAllowed() {
+         float vmin = Param::GetFloat(Param::BMS_Vmin);
+         if (vmin == 0) return true; // no data yet, don't block discharge
+         if (vmin < Param::GetFloat(Param::BMS_VminLimit)) return false;
+         if (Param::GetFloat(Param::BMS_Tmax) > Param::GetFloat(Param::BMS_TmaxLimit)) return false;
+         if (Param::GetFloat(Param::BMS_Tmin) < Param::GetFloat(Param::BMS_TminLimit)) return false;
+         return true;
+      };
+      virtual float DischargeReductionLevel() { return 1.0f; };
+      virtual int ProtectionSource() { return 0; }; // 0=VCU thresholds, 1=BMS-native
       virtual void Task100Ms() {
             Param::SetInt(Param::BMS_ChargeLim, MaxChargeCurrent());
             Param::SetFloat(Param::BMS_Vmin, 0);

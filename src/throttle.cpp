@@ -379,7 +379,7 @@ void Throttle::UdcLimitCommand(float& finalSpnt, float udc)
             }
             finalSpnt = MIN(finalSpnt, UDCres);
         }
-        else
+        else // regen
         {
             float udcErr = udc - udcmax;
             UDCres = udcErr * 3.5;

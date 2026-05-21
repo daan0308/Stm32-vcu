@@ -421,6 +421,25 @@ float ProcessThrottle(int speed)
         ErrorMessage::Post(ERR_TMPMMAX);
     }
 
+    if (Param::GetInt(Param::BMS_Mode) != BMSModes::BMSModeNoBMS)
+    {
+        if (!Param::GetInt(Param::BMS_DischargeOk))
+        {
+            if (finalSpnt > 0) finalSpnt = 0;
+            ErrorMessage::Post(ERR_BMSDISCHARGE);
+            Param::SetInt(Param::TorqDerate, Param::GetInt(Param::TorqDerate) | 32);
+        }
+        else
+        {
+            float bmsLevel = Param::GetFloat(Param::BMS_DischargeLevel) / 100.0f;
+            if (bmsLevel < 1.0f && finalSpnt > 0)
+            {
+                Param::SetInt(Param::TorqDerate, Param::GetInt(Param::TorqDerate) | 64);
+                finalSpnt = finalSpnt * bmsLevel;
+            }
+        }
+    }
+
     finalSpnt = Throttle::RampThrottle(finalSpnt); //Move ramping as last step -intro V2.30A
 
     // make sure the torque percentage is NEVER out of range

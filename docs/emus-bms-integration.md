@@ -1,229 +1,210 @@
 # EMUS G1 BMS Integration
 
-This document describes how the ZombieVerter VCU integrates with the EMUS G1 BMS, what data is exchanged, where display values come from, and what the user needs to configure on both sides.
+## Overview
+
+The EMUS G1 BMS is supported via the `EmusBMS` driver (`src/emusbms.cpp`). Select it by
+setting `BMS_Mode = 6` (EmusBMS) in the VCU parameter configuration.
 
 ---
 
-## Overview
+## Protection Responsibility
 
-The VCU communicates with the EMUS BMS over CAN. The BMS broadcasts cell measurements periodically; the VCU polls for frames it needs, decodes them, and populates display parameters. Charging is controlled by the VCU acting on diagnostic protection flags broadcast by the EMUS — the EMUS's own configured limits are used directly, so voltage and temperature thresholds do **not** need to be duplicated in the VCU web interface.
+The VCU supports two discharge protection models, selected automatically based on `BMS_Mode`.
+The active model is visible in the `BMS_ProtSrc` parameter.
 
-The default CAN base address is **0x300**. All EMUS frames use the scheme `Base + Sub-ID`. If your BMS is configured with a different base address, the registered CAN IDs in `emusbms.cpp` must be updated to match.
+| `BMS_ProtSrc` | Model | Who decides |
+|---------------|-------|-------------|
+| `0` (VCU) | VCU thresholds | Protection based on `BMS_VminLimit`, `BMS_TminLimit`, `BMS_TmaxLimit` configured in the VCU. Used by all BMS modes except EMUS. |
+| `1` (BMS) | BMS-native | Protection based on the EMUS protection and reduction flags from frame `0x307`. Thresholds live in the EMUS Control Panel, not in the VCU. |
+
+In both models the output is the same: `BMS_DischargeOk` and `BMS_DischargeLevel` are written
+every 100 ms and consumed by `ProcessThrottle()` to apply derating. The VCU's own derating
+parameters (`udcmin`, `udclim`, `tmphsmax`, etc.) always apply on top of either model.
 
 ---
 
 ## CAN Frames
 
-The VCU polls and decodes the following frames every 100 ms:
+Default base address: `0x300`. All frame IDs below assume this default.
 
-| Frame ID | Sub-ID | Description |
-|----------|--------|-------------|
-| 0x301 | Base+1 | Battery Voltage Overall Parameters |
-| 0x305 | Base+5 | State of Charge Parameters |
-| 0x306 | Base+6 | Energy Parameters |
-| 0x307 | Base+7 | Diagnostic Codes |
-| 0x308 | Base+8 | Cell Temperature Overall Parameters |
+| ID | Direction | Description |
+|----|-----------|-------------|
+| `0x301` | EMUS → VCU | Battery Voltage Overall Parameters (min/max/avg cell V, pack V) |
+| `0x305` | EMUS → VCU | State of Charge Parameters (pack current, user SOC) |
+| `0x306` | EMUS → VCU | Energy Parameters (remaining kWh) |
+| `0x307` | EMUS → VCU | Diagnostic Codes (protection flags, reduction flags) |
+| `0x308` | EMUS → VCU | Cell Temperature Overall Parameters (min/max/avg) |
+| `0x380` | VCU → EMUS | Configuration Parameter request (startup threshold query) |
+| `0x380` | EMUS → VCU | Configuration Parameter response |
+| `0x18FF50E5` | VCU → EMUS | J1939 charger mimic (sent every 1 s) |
+| `0x1806E5F4` | EMUS → VCU | J1939 charge limits (voltage, current, stop bit) |
 
-### 0x301 — Battery Voltage Overall Parameters
-
-| Signal | Bytes | Format | Scaling |
-|--------|-------|--------|---------|
-| Min cell voltage | 0 | uint8 | 0.01 V/lsb + 2.00 V |
-| Max cell voltage | 1 | uint8 | 0.01 V/lsb + 2.00 V |
-| Pack voltage | 3,4,5,6 | uint32, non-sequential¹ | 0.01 V/lsb |
-
-¹ Non-sequential byte order per EMUS G1 spec v3.1.0: byte 5 = MSB, byte 3 = 2nd, byte 6 = 3rd, byte 4 = LSB.
-
-### 0x305 — State of Charge Parameters
-
-| Signal | Bytes | Format | Scaling |
-|--------|-------|--------|---------|
-| Pack current | 0–1 | int16, MSB-first | 0.1 A/lsb (negative = discharging) |
-| User SOC | 5–6 | uint16, MSB-first | 1 %/lsb |
-
-**User SOC vs raw SOC:** The VCU uses *User SOC*, which reflects the usable charge window configured in the EMUS Control Panel. If you set the usable range to 20–90 % in the EMUS Control Panel, User SOC will report 0 % at 20 % raw and 100 % at 90 % raw. This is the correct value to display and act on.
-
-The 0x305 frame is also used as the **heartbeat** — receiving it resets the BMS timeout counter. If this frame stops arriving, the VCU considers the BMS offline and stops charging.
-
-### 0x306 — Energy Parameters
-
-| Signal | Bytes | Format | Scaling |
-|--------|-------|--------|---------|
-| Remaining energy | 2–3 | uint16, MSB-first | 10 Wh/lsb (stored as kWh) |
-
-### 0x307 — Diagnostic Codes
-
-The diagnostic codes frame carries protection flags set by the EMUS when any measured value exceeds a limit configured in the **EMUS Control Panel**. The VCU reads these flags directly to make charge/no-charge decisions — see [Charging Control](#charging-control) below.
-
-| Bit | Flag | Relevant for charging |
-|-----|------|-----------------------|
-| Byte 0, bit 1 | CellOverVoltage | Yes — stops charging |
-| Byte 0, bit 3 | ChrgOverCurrent | Yes — stops charging |
-| Byte 0, bit 4 | CellModuleOverHeat | Yes — stops charging |
-| Byte 0, bit 5 | Leakage (insulation fault) | Yes — stops charging |
-| Byte 1, bit 3 | CellOverHeat | Yes — stops charging |
-| Byte 1, bit 6 | PackOverVoltage | Yes — stops charging |
-| Byte 1, bit 7 | CellUnderHeat (too cold) | Yes — stops charging |
-
-### 0x308 — Cell Temperature Overall Parameters
-
-| Signal | Bytes | Format | Scaling |
-|--------|-------|--------|---------|
-| Min cell temperature | 0 | uint8 | 1 °C/lsb − 100 °C |
-| Max cell temperature | 1 | uint8 | 1 °C/lsb − 100 °C |
-| Avg cell temperature | 2 | uint8 | 1 °C/lsb − 100 °C |
+The VCU polls the EMUS by sending zero-length requests on `0x301`, `0x305`, `0x306`, `0x307`,
+and `0x308` every 100 ms. The EMUS responds with current data.
 
 ---
 
-## VCU Display Parameters
+## Charging
 
-These are read-only values visible in the VCU web interface and available for CAN TX via the CAN map.
+`ChargeAllowed()` uses the EMUS protection flags from `0x307` as the sole gate for charging.
+No cell voltage or temperature thresholds need to be configured in the VCU.
 
-| Parameter | Unit | Source |
-|-----------|------|--------|
-| `BMS_Vmin` | V | Min cell voltage from 0x301 |
-| `BMS_Vmax` | V | Max cell voltage from 0x301 |
-| `BMS_Tmin` | °C | Min cell temperature from 0x308 |
-| `BMS_Tmax` | °C | Max cell temperature from 0x308 |
-| `BMS_Tavg` | °C | Avg cell temperature from 0x308 |
-| `SOC` | % | User SOC from 0x305 |
-| `KWh` | kWh | Remaining energy from 0x306 |
-| `idc` | A | Pack current from 0x305 |
-| `udc2` | V | Pack voltage from 0x301 |
-| `power` | kW | Calculated: pack voltage × pack current / 1000 |
-| `range` | km | Predicted remaining range (rolling average, see below) |
-| `consumption` | Wh/km | Rolling average energy consumption (see below) |
-| `BMS_ChargeLim` | A | 0 when charging blocked; EMUS-requested current when J1939 active; 9998 (unlimited) if J1939 not yet active |
+Charging stops on any of the following protection flags:
 
-### Precharge threshold auto-calibration
+| Bit | Flag |
+|-----|------|
+| 1 | CellOverVoltage |
+| 3 | ChargeOverCurrent |
+| 4 | CellModuleOverHeat |
+| 11 | CellOverHeat |
+| 14 | PackOverVoltage |
+| 15 | CellUnderHeat (too cold to charge) |
 
-When pack voltage is above 50 V, the VCU automatically sets `udcsw` (the precharge completion threshold) to `packVoltage − 20 V`. This mirrors the convention used by the Leaf BMS integration and means you do not need to manually configure `udcsw` when using the EMUS BMS.
+### J1939 Charger Mimic
 
-### Predicted range and consumption
+While `opmode == MOD_CHARGE` the VCU sends `0x18FF50E5` every second to mimic a J1939
+charger. The EMUS responds with `0x1806E5F4` containing its requested charge voltage and
+current for the current CC/CV phase. `MaxChargeCurrent()` returns this value directly, so
+the charger's power setpoint tracks the EMUS profile automatically. Any charger that
+consumes `MaxChargeCurrent()` will benefit from this — it is not specific to any particular
+charger model.
 
-The VCU maintains a rolling average of energy consumption in Wh/km using an exponential moving average with a ~30-second time constant. It only updates while the vehicle is moving faster than 5 kph and the motor is drawing power (motoring only — regen and standstill are excluded to avoid skewing the estimate).
-
-- **`range`** = remaining kWh × 1000 / avgConsumption. Updates only when the BMS is reporting valid energy data.
-- **`consumption`** = the rolling average in Wh/km. Starts at 150 Wh/km on power-up. Divide by 10 to get kWh/100 km.
-
-Both values are available for display transmission on **CAN message 103** (`VCU_Values103`). Configure the CAN map in the VCU web interface: `range` → bytes 0–1, scale 0.1; `consumption` → bytes 2–3, scale 0.1.
+The frame is **not sent outside charge mode**. Sending it unconditionally causes the EMUS
+to set the `ChargerConnected` protection flag (frame `0x307` bit 10) during driving, which
+is misleading and can interfere with protection logic. The J1939 receive state
+(`j1939Active`) is cleared on charge mode exit so stale current limits are not carried over
+into the next session.
 
 ---
 
-## Charging Control
+## Drive Derating
 
-The VCU controls charging via the `BMS_ChargeLim` parameter:
-- **EMUS-requested current** — when J1939 charger mimic is active and charging is permitted, `BMS_ChargeLim` tracks the EMUS CC/CV taper profile directly
-- **9998 A** — charging permitted but J1939 not yet active (effectively unlimited, the charger's own limits apply)
-- **0 A** — charging blocked
+Drive derating is two-tiered, matching the EMUS's own protection vs. reduction distinction.
+This applies when `BMS_ProtSrc = 1` (BMS-native). When `BMS_ProtSrc = 0` (VCU thresholds),
+only the binary protection tier applies (no proportional reduction).
 
-Charging is blocked when **any** of the following is true:
+### Startup Threshold Query
 
-1. **BMS timeout** — the 0x305 heartbeat frame has not been received within the configured `BMS_Timeout` period. This protects against a BMS that has gone silent.
+At power-on, the VCU queries the EMUS for two configuration parameters via `0x380`:
 
-2. **EMUS protection flag active** — one of the diagnostic flags in 0x307 indicates a protection event (over-voltage, over-temperature, under-temperature, leakage, or over-current). These flags are raised by the EMUS based on limits configured in the **EMUS Control Panel** — the VCU trusts these directly.
+| Param ID | Name | Used for |
+|----------|------|----------|
+| `0x0004` | Cell Under-Voltage Protection Activate Value | Hard cutoff threshold |
+| `0x0008` | Low Cell Voltage Reduction Activate Value | Proportional derating threshold |
 
-> **Important:** The VCU web interface contains parameters `BMS_VminLimit`, `BMS_VmaxLimit`, `BMS_TminLimit`, and `BMS_TmaxLimit`. These are **not used** by the EMUS BMS driver. They exist for other BMS types (SimpBMS, DaisychainBMS) that do not broadcast diagnostic flags. For EMUS, set your protection limits in the EMUS Control Panel only.
+Both are encoded as `uint8_t`, `0.01 V/lsb`, offset `+200` (e.g. raw `80` → `2.80 V`).
 
----
+Queries are retried every 500 ms until both are answered. Until then, the low-cell-voltage
+reduction falls back to a fixed 50 % derating. The received values are visible in
+`BMS_UVProtThr` and `BMS_LowVRedThr` (both show `0.00` until the query completes).
 
-## User-Configurable VCU Parameters
+### Tier 1 — Protection Flags (hard zero torque)
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `BMS_Timeout` | 10 s | How long to wait without a 0x305 frame before considering the BMS offline and blocking charging. |
-| `BMSCan` | CAN1 | Which CAN interface the EMUS is connected to. |
+If any of the following protection flags is set, forward drive torque is immediately zeroed,
+`ERR_BMSDISCHARGE` is posted, and `TorqDerate` bit 5 (value 32) is set.
 
----
+| Bit | Flag |
+|-----|------|
+| 0 | CellUnderVoltage |
+| 2 | DischargeOverCurrent |
+| 13 | PackUnderVoltage |
 
-## EMUS Control Panel Requirements
+### Tier 2 — Reduction Flags (proportional derating)
 
-The following must be configured in the EMUS G1 Control Panel software for correct VCU integration:
+Reduction flags indicate a warning condition that warrants reduced — not zero — power.
+The VCU computes a multiplier in `[0.0, 1.0]` applied to forward torque. `TorqDerate`
+bit 6 (value 64) is set when reduction is active.
 
-- **User SOC range**: set to 0–100 % unless you intentionally want to restrict the reported range. If set to e.g. 20–80 %, the VCU's `SOC` display and charge cutoff will reflect that window.
-- **CAN base address**: must match the IDs registered in the VCU (default 0x300).
-- **Protection limits**: configure cell voltage min/max, temperature min/max, and current limits here. The VCU reads the resulting diagnostic flags; it does not duplicate these thresholds.
-- **Neuro messages (0x522/0x523)**: not used by this integration. These are intended for TM4/Dana TM4 Neuro inverter setups and are not transmitted by default.
+| Bit | Flag | Derating method |
+|-----|------|-----------------|
+| 0 | LowCellVoltage | Proportional between `cellUVProtectionThreshold` and `lowCellVReductionThreshold` using live `BMS_Vmin` |
+| 1 | HighDischargeCurrent | Fixed 75 % |
+| 2 | HighCellModuleTemperature | Fixed 50 % |
+| 5 | HighCellTemperature | Fixed 50 % |
 
----
+When multiple flags are active simultaneously the most restrictive (lowest) level is applied.
 
-## J1939 Charger Mimic
-
-### Overview
-
-The EMUS G1 BMS supports J1939 chargers. When a J1939 charger is present on the bus, the EMUS responds with its requested charge voltage and current, automatically tapering current as the pack approaches full charge (CC/CV profile). The VCU exploits this to get a fine-grained power setpoint rather than a simple on/off signal.
-
-The VCU mimics a J1939 charger on the CAN bus. The EMUS responds with its charge setpoints, and the VCU passes those setpoints directly to the Tesla Gen2 charger via the `BMS_ChargeLim` parameter.
-
-### CAN Frames
-
-| Frame ID | Direction | Description |
-|----------|-----------|-------------|
-| 0x18FF50E5 | VCU → EMUS | Charger status broadcast (sent every 1 s) |
-| 0x1806E5F4 | EMUS → VCU | Requested charge voltage and current |
-
-Both are 29-bit extended CAN frames. The ZombieVerter CAN driver handles extended frames transparently — no special configuration is needed.
-
-#### 0x18FF50E5 — Charger→BMS status
-
-Sent by the VCU every 1 second. The EMUS requires this message within every 5 seconds; without it the EMUS will not transmit 0x1806E5F4.
-
-| Bytes | Content |
-|-------|---------|
-| 0–1 | Output voltage, uint16 MSB-first, 0.1 V/lsb (VCU reports actual pack voltage) |
-| 2–3 | Output current, uint16 MSB-first, 0.1 A/lsb (reported as 0 — not available from Tesla charger feedback) |
-| 4 | Status byte: 0x00 = all normal |
-| 5–7 | Reserved, 0x00 |
-
-#### 0x1806E5F4 — BMS→Charger charge setpoints
-
-Sent by the EMUS in response to 0x18FF50E5. Contains the EMUS CC/CV profile output.
-
-| Bytes | Signal | Format | Scaling |
-|-------|--------|--------|---------|
-| 0–1 | Max allowable charge voltage | uint16, MSB-first | 0.1 V/lsb |
-| 2–3 | Max allowable charge current | uint16, MSB-first | 0.1 A/lsb |
-| 4 | Control byte: bit 0 = stop charging (1 = stop, 0 = charge) | — | — |
-
-### How BMS_ChargeLim tracks the EMUS taper
-
-Once 0x1806E5F4 has been received at least once (J1939 active), `MaxChargeCurrent()` returns the EMUS-requested current directly. `BMS_ChargeLim` is set from this value every 100 ms.
-
-The Tesla Gen2 charger power setpoint is calculated as:
+#### Low Cell Voltage — proportional detail
 
 ```
-calcBMSpwr = HVvolts × BMS_ChargeLim   [W]
+band  = lowCellVReductionThreshold − cellUVProtectionThreshold
+level = clamp((BMS_Vmin − cellUVProtectionThreshold) / band, 0, 1)
 ```
 
-As the EMUS reduces its requested current during the CV phase, `BMS_ChargeLim` falls, and the Tesla charger reduces output power proportionally — no VCU-side threshold logic required.
+At `BMS_Vmin == lowCellVReductionThreshold`: `level = 1.0` (full torque)  
+At `BMS_Vmin == cellUVProtectionThreshold`:  `level = 0.0` (zero torque, just before hard cutoff)
 
-Before 0x1806E5F4 is first received (J1939 not yet active), `BMS_ChargeLim` falls back to 9998 A (unlimited), so charging is not blocked while the EMUS negotiates.
+### Threshold Hysteresis
 
-### Verified live values
+Every protection and reduction threshold in the EMUS has a separate activate and deactivate
+value, both configurable in the EMUS Control Panel (for example: `CellUnderVoltage` activates
+at 2.70 V, deactivates at 2.80 V). The EMUS applies this hysteresis internally before setting
+or clearing a flag in frame `0x307`.
 
-With the vehicle at rest and BMS connected, the following were observed in Cangaroo on the CANable SLCAN adapter:
+The VCU acts on the flags themselves — it does not perform its own voltage or temperature
+threshold comparisons for the binary on/off decisions. By the time the VCU sees a flag set
+or cleared, the EMUS has already applied its own hysteresis. There is therefore no risk of
+jitter at the threshold boundary in the VCU. Adding a second hysteresis layer would be
+counterproductive: the VCU could hold discharge blocked even after the EMUS had already
+cleared the flag.
 
-- **0x18FF50E5**: visible as a 29-bit extended frame, transmitted every 1 s by the VCU
-- **0x1806E5F4**: EMUS response; decoded values:
-  - Bytes 0–1 = `0x0CA5` → **323.7 V** requested charge voltage
-  - Bytes 2–3 = `0x03C0` → **96.0 A** requested charge current at rest
+The one place where the VCU does its own voltage arithmetic is the proportional low-cell-
+voltage derating level shown above. This calculation only runs while the `LowCellVoltage`
+reduction flag is already active. Because it produces a continuous smooth output rather than
+a binary decision, voltage jitter near the band edges produces smooth torque variation rather
+than sudden cut/restore — which is the intended behaviour.
 
-During active charging the EMUS will taper the requested current as the pack voltage rises toward the target.
-
-### Requirements
-
-**CAN bus speed:** The J1939 standard specifies 250 kbps. If your EMUS is on a 500 kbps bus, check whether the EMUS firmware supports J1939 mode at that speed — refer to the EMUS G1 release notes. The VCU CAN speed is set in the VCU web interface and must match the bus.
-
-**EMUS Control Panel:** J1939 charger support may need to be enabled in the EMUS configuration. Refer to the EMUS G1 Control Panel documentation for the relevant setting. Protection limits (voltage, temperature, current) continue to be configured in the EMUS Control Panel and are enforced via the diagnostic codes frame (0x307) — see [Charging Control](#charging-control).
+> **Note:** The VCU queries the **activate** thresholds at startup (`0x0004`, `0x0008`). The
+> EMUS also has corresponding deactivate thresholds (`0x0005`, `0x0009`) which are not
+> queried. The activate values are used as the band boundaries in the proportional calculation.
+> The difference between activate and deactivate thresholds is typically ≤ 100 mV, so this
+> is a minor approximation.
 
 ---
 
-## Timeout Behaviour
+## Observable Parameters
 
-The BMS timeout counter decrements every 100 ms. It is reset to `BMS_Timeout × 10` each time a valid 0x305 frame is received. If the counter reaches zero:
+| Parameter | ID | Description |
+|-----------|----|-------------|
+| `BMS_Vmin` | 2084 | Lowest cell voltage (live, from frame `0x301`) |
+| `BMS_Vmax` | 2085 | Highest cell voltage (live, from frame `0x301`) |
+| `BMS_Tmin` | 2086 | Lowest cell temperature |
+| `BMS_Tmax` | 2087 | Highest cell temperature |
+| `BMS_Tavg` | 2103 | Average cell temperature |
+| `BMS_ChargeLim` | 2088 | Maximum charge current (from J1939 or 9998 A if J1939 not active) |
+| `BMS_DischargeOk` | 9005 | `1` = discharge allowed, `0` = protection active |
+| `BMS_DischargeLevel` | 9006 | Discharge torque multiplier in % (100 = full, 0 = none) |
+| `BMS_UVProtThr` | 9007 | Cell under-voltage protection threshold read from EMUS at startup (0 = not yet received) |
+| `BMS_LowVRedThr` | 9008 | Low cell voltage reduction threshold read from EMUS at startup (0 = not yet received) |
+| `BMS_ProtSrc` | 9009 | Active protection source: `0` = VCU thresholds, `1` = BMS-native |
+| `TorqDerate` | 2102 | Bitmask of active derating reasons (bit 32 = protection, bit 64 = reduction) |
+| `SOC` | 2015 | State of charge (%) from EMUS |
+| `KWh` | 2013 | Remaining energy (kWh) from EMUS |
 
-- All cell/temperature display values are set to 0
-- `idc` and `udc2` are set to 0  
-- Charging is blocked (`BMS_ChargeLim` = 0)
+---
 
-This ensures that a silent or disconnected BMS fails safe — charging stops rather than continuing unprotected.
+## TorqDerate Bitmask Reference
+
+| Bit (value) | Reason |
+|-------------|--------|
+| 1 | UDC below `udcmin` |
+| 2 | UDC above `udclim` (regen limited) |
+| 4 | IDC below `idcmin` |
+| 8 | IDC above `idcmax` |
+| 16 | Heatsink or motor temperature above `tmphsmax`/`tmpmmax` |
+| 32 | BMS protection — discharge blocked |
+| 64 | BMS reduction — torque proportionally reduced (EMUS only) |
+
+---
+
+## Configuration
+
+| Parameter | Purpose |
+|-----------|---------|
+| `BMS_Mode` | Set to `6` (EmusBMS) |
+| `BMS_Timeout` | Seconds without a frame `0x305` before BMS is considered offline |
+| `BMSCan` | CAN interface the EMUS is connected to |
+
+No VCU-side cell voltage or temperature thresholds need to be configured when using the
+EMUS BMS (`BMS_ProtSrc = 1`). All thresholds are read from the EMUS at startup.
+`BMS_VminLimit`, `BMS_TminLimit`, and `BMS_TmaxLimit` are not used in this mode.
