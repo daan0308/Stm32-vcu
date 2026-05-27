@@ -17,7 +17,7 @@ The active model is visible in the `BMS_ProtSrc` parameter.
 | `0` (VCU) | VCU thresholds | Protection based on `BMS_VminLimit`, `BMS_TminLimit`, `BMS_TmaxLimit` configured in the VCU. Used by all BMS modes except EMUS. |
 | `1` (BMS) | BMS-native | Protection based on the EMUS protection and reduction flags from frame `0x307`. Thresholds live in the EMUS Control Panel, not in the VCU. |
 
-In both models the output is the same: `BMS_DischargeOk` and `BMS_DischargeLevel` are written
+In both models the output is the same: `BMS_DischargeOk` and `BMS_TorqRedPct` are written
 every 100 ms and consumed by `ProcessThrottle()` to apply derating. The VCU's own derating
 parameters (`udcmin`, `udclim`, `tmphsmax`, etc.) always apply on top of either model.
 
@@ -63,17 +63,33 @@ Charging stops on any of the following protection flags:
 ### J1939 Charger Mimic
 
 While `opmode == MOD_CHARGE` the VCU sends `0x18FF50E5` every second to mimic a J1939
-charger. The EMUS responds with `0x1806E5F4` containing its requested charge voltage and
-current for the current CC/CV phase. `MaxChargeCurrent()` returns this value directly, so
-the charger's power setpoint tracks the EMUS profile automatically. Any charger that
-consumes `MaxChargeCurrent()` will benefit from this — it is not specific to any particular
-charger model.
+charger. The frame carries the actual charger output:
+
+| Bytes | Field | Encoding |
+|-------|-------|----------|
+| 0–1 | `Param::udc` (DC bus voltage) | uint16 big-endian, 0.1 V/lsb |
+| 2–3 | `Param::idc` (charge current) | uint16 big-endian, 0.1 A/lsb |
+
+The EMUS uses these to verify the charger is active and delivering power.  It responds with
+`0x1806E5F4` containing its requested charge voltage and current for the current CC/CV phase.
+`MaxChargeCurrent()` returns this value directly, so the charger's power setpoint tracks the
+EMUS profile automatically. Any charger that consumes `MaxChargeCurrent()` will benefit from
+this — it is not specific to any particular charger model.
 
 The frame is **not sent outside charge mode**. Sending it unconditionally causes the EMUS
 to set the `ChargerConnected` protection flag (frame `0x307` bit 10) during driving, which
-is misleading and can interfere with protection logic. The J1939 receive state
-(`j1939Active`) is cleared on charge mode exit so stale current limits are not carried over
-into the next session.
+is misleading and can interfere with protection logic.
+
+On charge mode exit `j1939StopBit` is cleared so an end-of-session stop bit from the
+previous session cannot block the next one. `j1939Active` and `j1939ReqCurrent` are
+intentionally kept so that if the EMUS's first response at charge-session start carries
+zero current (before its CC/CV setpoint is established), `MaxChargeCurrent()` does not
+spuriously return 0 and terminate the session prematurely.
+
+Per J1939 protocol the EMUS uses the **stop bit** as the authoritative charge-termination
+signal, not zero current. `MaxChargeCurrent()` therefore treats a zero-current response
+without stop bit as "setpoint not yet established" and returns `9998` (unconstrained) until
+the EMUS sends a real setpoint.
 
 ---
 
@@ -171,15 +187,25 @@ than sudden cut/restore — which is the intended behaviour.
 | `BMS_Tmin` | 2086 | Lowest cell temperature |
 | `BMS_Tmax` | 2087 | Highest cell temperature |
 | `BMS_Tavg` | 2103 | Average cell temperature |
-| `BMS_ChargeLim` | 2088 | Maximum charge current (from J1939 or 9998 A if J1939 not active) |
+| `BMS_ChargeLim` | 2088 | Maximum charge current after debounce (9998 = unconstrained) |
 | `BMS_DischargeOk` | 9005 | `1` = discharge allowed, `0` = protection active |
-| `BMS_DischargeLevel` | 9006 | Discharge torque multiplier in % (100 = full, 0 = none) |
+| `BMS_TorqRedPct` | 9006 | Drive torque reduction factor in % (`100` = full torque, `0` = fully reduced) |
 | `BMS_UVProtThr` | 9007 | Cell under-voltage protection threshold read from EMUS at startup (0 = not yet received) |
 | `BMS_LowVRedThr` | 9008 | Low cell voltage reduction threshold read from EMUS at startup (0 = not yet received) |
 | `BMS_ProtSrc` | 9009 | Active protection source: `0` = VCU thresholds, `1` = BMS-native |
 | `TorqDerate` | 2102 | Bitmask of active derating reasons (bit 32 = protection, bit 64 = reduction) |
 | `SOC` | 2015 | State of charge (%) from EMUS |
 | `KWh` | 2013 | Remaining energy (kWh) from EMUS |
+
+### Charge Debug Parameters
+
+| Parameter | ID | Description |
+|-----------|----|-------------|
+| `BMS_J1939Cur` | 9010 | Raw J1939 charge current requested by EMUS before debounce (A) |
+| `BMS_J1939Stop` | 9011 | J1939 stop bit from EMUS: `1` = EMUS commanding charge stop |
+| `BMS_ProtFlags` | 9012 | EMUS protection flags lower 16 bits from frame `0x307` (decimal) |
+| `BMS_ChgStopCnt` | 9013 | Charge stop debounce counter (0–50 ticks at 100 ms; 50 = stop confirmed) |
+| `BMS_J1939Act` | 9014 | `1` = EMUS has responded to the J1939 charger mimic |
 
 ---
 

@@ -58,10 +58,12 @@
  *   Byte 7  BATTERY STATUS FLAGS
  *
  * J1939 charger mimic: while opmode == MOD_CHARGE the VCU sends 0x18FF50E5
- * every second so the EMUS knows a J1939 charger is present. The EMUS responds
- * with 0x1806E5F4 containing its requested charge voltage and current.
- * MaxChargeCurrent() returns that value directly, so the charger's power
- * setpoint tracks the EMUS CC/CV profile automatically.
+ * every second so the EMUS knows a J1939 charger is present. The frame carries
+ * the actual charger output: Param::udc (DC bus voltage, 0.1 V/lsb) in bytes
+ * 0-1 and Param::idc (charge current, 0.1 A/lsb) in bytes 2-3, both big-endian.
+ * The EMUS responds with 0x1806E5F4 containing its requested charge voltage and
+ * current. MaxChargeCurrent() returns that value directly, so the charger's
+ * power setpoint tracks the EMUS CC/CV profile automatically.
  * The frame is suppressed outside charge mode to prevent the EMUS from setting
  * the ChargerConnected protection flag (0x307 bit 10) during drive.
  */
@@ -159,11 +161,23 @@ float EmusBMS::DischargeReductionLevel()
    return level;
 }
 
+/*
+ * Returns the maximum charge current the EMUS permits, in amps.
+ *
+ * chargeCurrentAllowed is a debounced flag maintained by Task100Ms() at a fixed
+ * 100 ms rate.  MaxChargeCurrent() reads it rather than calling ChargeAllowed()
+ * directly; this prevents the debounce counter from being incremented more than
+ * once per 100 ms tick (it is also called from the 200 ms task in stm32_vcu.cpp).
+ *
+ * A zero J1939 current without stop bit is treated as "setpoint not yet established"
+ * and returns 9998 (unconstrained), because the EMUS uses the stop bit — not zero
+ * current — as the authoritative charge-termination signal.
+ */
 float EmusBMS::MaxChargeCurrent()
 {
-   if (!ChargeAllowed()) return 0;
-   if (!j1939Active)    return 9998.0f;
-   if (j1939StopBit)    return 0;
+   if (!chargeCurrentAllowed) return 0.0f;
+   if (!j1939Active)          return 9998.0f; // J1939 not yet established — unconstrained
+   if (j1939ReqCurrent < 0.1f) return 9998.0f; // CC/CV setpoint not yet established
    return j1939ReqCurrent;
 }
 
@@ -268,11 +282,35 @@ void EmusBMS::Task100Ms()
 
    Param::SetFloat(Param::KWh, remainingKWh);
    Param::SetFloat(Param::SOC, stateOfCharge);
+
+   // Debounce charge-stop conditions at the 100 ms task rate.
+   // chargeCurrentAllowed is only updated here, so MaxChargeCurrent() can be called
+   // from any task without incrementing the counter more than once per 100 ms.
+   // Threshold: 50 ticks × 100 ms = 5 s — long enough to outlast CC→CV transients.
+   static const int CHARGE_STOP_DEBOUNCE_TICKS = 50;
+   if (!ChargeAllowed() || j1939StopBit)
+   {
+      if (++chargeStopCounter >= CHARGE_STOP_DEBOUNCE_TICKS)
+         chargeCurrentAllowed = false; // sustained stop: genuine
+   }
+   else
+   {
+      chargeStopCounter    = 0;
+      chargeCurrentAllowed = true;
+   }
+
    Param::SetInt(Param::BMS_ChargeLim, MaxChargeCurrent());
 
    // EMUS-specific threshold visibility (queried at startup via 0x380)
    Param::SetFloat(Param::BMS_UVProtThr, cellUVProtectionThreshold);
    Param::SetFloat(Param::BMS_LowVRedThr, lowCellVReductionThreshold);
+
+   // J1939 and protection-flag debug visibility
+   Param::SetFloat(Param::BMS_J1939Cur,  j1939ReqCurrent);
+   Param::SetInt(Param::BMS_J1939Stop,   j1939StopBit    ? 1 : 0);
+   Param::SetInt(Param::BMS_ProtFlags,   (int)(protectionFlags & 0xFFFF));
+   Param::SetInt(Param::BMS_ChgStopCnt,  chargeStopCounter);
+   Param::SetInt(Param::BMS_J1939Act,    j1939Active     ? 1 : 0);
 
    // Poll BMS for all required frames
    uint8_t data[8] = {0};
@@ -306,8 +344,6 @@ void EmusBMS::Task100Ms()
    // J1939 charger mimic: send 0x18FF50E5 every second, but only while in charge mode.
    // Sending this frame unconditionally makes the EMUS set the ChargerConnected protection
    // flag (0x307 bit 10) even when not charging. Gating on MOD_CHARGE prevents that.
-   // j1939Active and the counter are reset on exit so the first TX fires promptly on
-   // the next charge session and stale current limits are not carried over.
    if (Param::GetInt(Param::opmode) == MOD_CHARGE)
    {
       j1939TxCounter++;
@@ -315,19 +351,28 @@ void EmusBMS::Task100Ms()
       {
          j1939TxCounter = 0;
          uint8_t j1939[8] = {0};
-         uint16_t reportVoltage = (uint16_t)(packVoltage * 10.0f);
+         // Report actual charger output: udc = DC bus voltage, idc = charge current.
+         // idc is positive when charging; clamp to 0 if the measurement reads negative.
+         uint16_t reportVoltage = (uint16_t)(Param::GetFloat(Param::udc) * 10.0f);
+         float    idcFloat      = Param::GetFloat(Param::idc);
+         uint16_t reportCurrent = (idcFloat > 0.0f) ? (uint16_t)(idcFloat * 10.0f) : 0;
          j1939[0] = (reportVoltage >> 8) & 0xFF;
          j1939[1] =  reportVoltage       & 0xFF;
-         j1939[2] = 0;
-         j1939[3] = 0;
-         j1939[4] = 0x00;
-         j1939[5] = 0; j1939[6] = 0; j1939[7] = 0;
+         j1939[2] = (reportCurrent >> 8) & 0xFF;
+         j1939[3] =  reportCurrent       & 0xFF;
+         j1939[4] = 0; j1939[5] = 0; j1939[6] = 0; j1939[7] = 0;
          can->Send(0x18FF50E5, (uint32_t*)j1939, 8);
       }
    }
    else
    {
-      j1939TxCounter = 0;     // reset so first TX is prompt when charging starts
-      j1939Active    = false; // clear stale current limit from previous charge session
+      j1939TxCounter    = 0;     // reset so first TX fires promptly when charging starts
+      j1939StopBit      = false; // clear any end-of-session stop bit so next session
+                                 // is not blocked.  j1939Active and j1939ReqCurrent are
+                                 // intentionally kept: resetting j1939Active here causes
+                                 // MaxChargeCurrent() to return 0 when the EMUS sends its
+                                 // first response before its CC/CV setpoint is established.
+      chargeStopCounter    = 0;    // reset debounce so previous session state does not carry over
+      chargeCurrentAllowed = true; // ensure next session starts in the allowed state
    }
 }

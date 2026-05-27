@@ -388,7 +388,7 @@ static void Ms100Task(void)
     selectedCharger->Task100Ms();
     selectedBMS->Task100Ms();
     Param::SetInt(Param::BMS_DischargeOk, selectedBMS->DischargeAllowed() ? 1 : 0);
-    Param::SetFloat(Param::BMS_DischargeLevel, selectedBMS->DischargeReductionLevel() * 100.0f);
+    Param::SetFloat(Param::BMS_TorqRedPct, selectedBMS->DischargeReductionLevel() * 100.0f);
     Param::SetInt(Param::BMS_ProtSrc, selectedBMS->ProtectionSource());
     selectedDCDC->Task100Ms();
     selectedShifter->Task100Ms();

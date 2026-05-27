@@ -431,7 +431,7 @@ float ProcessThrottle(int speed)
         }
         else
         {
-            float bmsLevel = Param::GetFloat(Param::BMS_DischargeLevel) / 100.0f;
+            float bmsLevel = Param::GetFloat(Param::BMS_TorqRedPct) / 100.0f;
             if (bmsLevel < 1.0f && finalSpnt > 0)
             {
                 Param::SetInt(Param::TorqDerate, Param::GetInt(Param::TorqDerate) | 64);

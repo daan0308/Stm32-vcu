@@ -65,6 +65,13 @@ class EmusBMS: public BMS
       bool    j1939Active     = false;
       int     j1939TxCounter  = 0;
 
+      // Charge-stop debounce — updated only in Task100Ms() at a fixed 100 ms rate.
+      // MaxChargeCurrent() reads chargeCurrentAllowed rather than calling ChargeAllowed()
+      // directly, preventing the counter from incrementing more than once per 100 ms
+      // tick (it would otherwise also increment from the stm32_vcu.cpp 200 ms check).
+      int     chargeStopCounter     = 0;
+      bool    chargeCurrentAllowed  = true;
+
       // EMUS configuration thresholds queried at startup via 0x380 (Base+80h).
       // param 0x0008: Low Cell Voltage Reduction Activate Value
       // param 0x0004: Cell Under-Voltage Protection Activate Value
