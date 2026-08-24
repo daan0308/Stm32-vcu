@@ -499,6 +499,23 @@ static void Ms100Task(void)
     {
         IOMatrix::GetPin(IOMatrix::HVACTIVE)->Clear();//HV Active Off
     }
+
+    //Always-on output (e.g. Tesla three-way coolant valve fixed to radiator loop)
+    IOMatrix::GetPin(IOMatrix::ALWAYSON)->Set();
+
+    //Battery temperature valve output: on above 15C, off below 13C (hysteresis
+    //prevents valve chatter). Uses the hottest cell as that governs cooling need.
+    {
+        float battTmax = Param::GetFloat(Param::BMS_Tmax);
+        if(battTmax > 15.0f)
+        {
+            IOMatrix::GetPin(IOMatrix::BATTTEMPVALVE)->Set();
+        }
+        else if(battTmax < 13.0f)
+        {
+            IOMatrix::GetPin(IOMatrix::BATTTEMPVALVE)->Clear();
+        }
+    }
 }
 
 static void ControlCabHeater(int opmode)
