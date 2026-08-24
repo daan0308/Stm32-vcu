@@ -203,11 +203,12 @@ driving and a negative `idcmin` during regen.
 The EMUS protocol sends pack current with the opposite sign (negative = discharging), so
 the driver inverts it before publishing `idc` and `power`.
 
-> **Verify on vehicle:** the `power` calculation existed before the inversion was added.
-> If the displayed power was already correctly positive while driving, the EMUS current
-> sensor in this installation effectively reports positive on discharge (sensor mounted or
-> configured inverted) — in that case the inversion must be removed again. One glance at
-> `idc`/`power` during the first meters of driving settles it.
+> **Sign verified indirectly:** before the inversion was added, the consumption value
+> (`Param::consumption`, an EMA of `power / speed` that only updates while `power > 0`)
+> was stuck at its 150 Wh/km start value — proving `power` was negative while driving,
+> i.e. the EMUS does send negative on discharge as the spec says. The inversion is
+> therefore correct, and as a side effect consumption and predicted range work for the
+> first time.
 
 ---
 
