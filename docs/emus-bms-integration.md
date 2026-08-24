@@ -178,6 +178,75 @@ than sudden cut/restore — which is the intended behaviour.
 
 ---
 
+## Current and Voltage Sources (EMUS + IVT-S)
+
+With the EMUS BMS active, measurement responsibility is split between the BMS and the
+IVT-S shunt:
+
+| Signal | Source | Why |
+|--------|--------|-----|
+| `idc` (pack current) | **EMUS** (frame `0x305`) | The EMUS sensor is bidirectional; the IVT-S in this installation only measures discharge, so charge and regen current would be invisible. |
+| `power`, `KWh` | **EMUS** | Derived from the EMUS current, so they follow the same ownership. |
+| `udc`, `udc2`, `udc3`, `deltaV` | **IVT-S** | Bus-side measurement (sense wires after the contactors). The precharge check (`STAT_UDCBELOWUDCSW`) needs to see the bus voltage rise during precharge; the EMUS measures pack-side, before the contactors, and would always read full pack voltage. |
+
+Implementation: `EmusBMS::Task100Ms()` publishes `Param::idc` and `Param::power`; the ISA
+branch in `utils.cpp` skips its `idc`/`power`/`KWh`/`AMPh` writes when
+`BMS_Mode == EmusBMS` (previously both wrote `power` and `KWh`, fighting each other).
+
+### Sign Convention
+
+The VCU convention is **positive = discharge, negative = charge/regen**. This follows from
+the IVT-S implementation (raw milliamps passed through unchanged, positive while driving)
+and from the throttle idc derating, which compares against a positive `idcmax` while
+driving and a negative `idcmin` during regen.
+
+The EMUS protocol sends pack current with the opposite sign (negative = discharging), so
+the driver inverts it before publishing `idc` and `power`.
+
+> **Verify on vehicle:** the `power` calculation existed before the inversion was added.
+> If the displayed power was already correctly positive while driving, the EMUS current
+> sensor in this installation effectively reports positive on discharge (sensor mounted or
+> configured inverted) — in that case the inversion must be removed again. One glance at
+> `idc`/`power` during the first meters of driving settles it.
+
+---
+
+## Status Word — Display Integration
+
+The VCU status word (`Param::status`, broadcast in the VCU status frame `0x64` and consumed
+by the P911 touch display) carries a low-battery-voltage bit driven by the EMUS:
+
+```
+stt |= (Param::GetInt(Param::BMS_ProtFlags) & ((1 << 0) | (1 << 13))) ? STAT_UDCLOW : STAT_NONE;
+```
+
+`STAT_UDCLOW` (bit 0, value 1) is set when the EMUS reports `CellUnderVoltage` (bit 0) or
+`PackUnderVoltage` (bit 13) in frame `0x307`. The display raises its "battery voltage low"
+alert on this bit (only while `opmode == MOD_RUN`). Because the EMUS applies its own
+threshold **and time delay** before setting a protection flag, a brief voltage sag under
+full throttle does not trigger the alert — the BMS is authoritative on battery voltage.
+
+With a non-EMUS BMS mode `BMS_ProtFlags` stays `0`, so `STAT_UDCLOW` is never set.
+
+### Status Bit Allocation
+
+| Bit (value) | Flag | Set by VCU | Used for |
+|-------------|------|------------|----------|
+| 1 | `STAT_UDCLOW` | ✅ | EMUS under-voltage protection → display battery alert |
+| 2 | `STAT_UDCHIGH` | ❌ unused | *free — candidate: EMUS CellOverVoltage/PackOverVoltage (bits 1/14)* |
+| 4 | `STAT_UDCBELOWUDCSW` | ✅ | Precharge completion check (`udc < udcsw`) |
+| 8 | `STAT_UDCLIM` | ✅ | Run/charge start blocked (`udc ≥ udclim`) |
+| 16 | `STAT_EMCYSTOP` | ❌ unused | *display already listens to this for its emergency-stop alert (`ALERT_E100`), but the VCU never sets it — the alert can currently never fire* |
+| 32 | `STAT_MPROT` | ❌ unused | *free* |
+| 64 | `STAT_POTPRESSED` | ✅ | Run start blocked while throttle pressed |
+| 128 | `STAT_TMPHS` | ❌ unused | *free — candidate: heatsink temperature above `tmphsmax`* |
+| 256 | `STAT_WAITSTART` | ❌ unused | *free* |
+
+The unused bits are leftovers from the OpenInverter codebase ZombieVerter descends from;
+only the enum values were carried over, never the code that set them.
+
+---
+
 ## Observable Parameters
 
 | Parameter | ID | Description |

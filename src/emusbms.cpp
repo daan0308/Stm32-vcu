@@ -270,7 +270,13 @@ void EmusBMS::Task100Ms()
       // Auto-calibrate precharge threshold to actual pack voltage
       if (packVoltage > 50.0f)
          Param::SetFloat(Param::udcsw, packVoltage - 20.0f);
-      Param::SetFloat(Param::power, (packVoltage * packCurrent) / 1000.0f);
+      // EMUS current sensor is bidirectional; the IVT-S shunt only measures
+      // discharge, so idc comes from the BMS. udc stays with the shunt: the
+      // precharge check needs the bus-side voltage, not the pack-side one.
+      // Sign convention (per ISA shunt / throttle idc derating): positive =
+      // discharge. EMUS sends negative while discharging, hence the inversion.
+      Param::SetFloat(Param::idc, -packCurrent);
+      Param::SetFloat(Param::power, (packVoltage * -packCurrent) / 1000.0f);
    }
    else
    {

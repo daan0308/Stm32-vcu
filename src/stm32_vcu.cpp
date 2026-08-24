@@ -632,6 +632,10 @@ static void Ms10Task(void)
     stt |= Param::GetInt(Param::pot) <= Param::GetInt(Param::potmin) ? STAT_NONE : STAT_POTPRESSED;
     stt |= udc >= Param::GetFloat(Param::udcsw) ? STAT_NONE : STAT_UDCBELOWUDCSW;
     stt |= udc < Param::GetFloat(Param::udclim) ? STAT_NONE : STAT_UDCLIM;
+    //BMS is authoritative on low battery voltage: EMUS protection flags
+    //CellUnderVoltage (bit 0) and PackUnderVoltage (bit 13) both carry the
+    //BMS-configured threshold and time delay, so no local voltage compare here
+    stt |= (Param::GetInt(Param::BMS_ProtFlags) & ((1 << 0) | (1 << 13))) ? STAT_UDCLOW : STAT_NONE;
     Param::SetInt(Param::status, stt);
 
     switch (opmode)

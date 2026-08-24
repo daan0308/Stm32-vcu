@@ -304,14 +304,20 @@ float ProcessUdc(int motorSpeed)
         Param::SetFloat(Param::udc2, udc2);
         float udc3 = ((float)ISA::Voltage3)/1000;//get voltage from isa sensor and post to parameter database
         Param::SetFloat(Param::udc3, udc3);
-        float idc = ((float)ISA::Amperes)/1000;//get current from isa sensor and post to parameter database
-        Param::SetFloat(Param::idc, idc);
-        float kw = ((float)ISA::KW)/1000;//get power from isa sensor and post to parameter database
-        Param::SetFloat(Param::power, kw);
-        float kwh = ((float)ISA::KWh)/1000;//get kwh from isa sensor and post to parameter database
-        Param::SetFloat(Param::KWh, kwh);
-        float Amph = ((float)ISA::Ah)/3600;//get Ah from isa sensor and post to parameter database
-        Param::SetFloat(Param::AMPh, Amph);
+        //With the EMUS BMS the current-derived values come from the BMS: its sensor is
+        //bidirectional while the IVT-S only measures discharge. The shunt keeps supplying
+        //the voltages (bus-side measurement, required for the precharge check).
+        if (Param::GetInt(Param::BMS_Mode) != BMSModes::BMSModeEmusBMS)
+        {
+            float idc = ((float)ISA::Amperes)/1000;//get current from isa sensor and post to parameter database
+            Param::SetFloat(Param::idc, idc);
+            float kw = ((float)ISA::KW)/1000;//get power from isa sensor and post to parameter database
+            Param::SetFloat(Param::power, kw);
+            float kwh = ((float)ISA::KWh)/1000;//get kwh from isa sensor and post to parameter database
+            Param::SetFloat(Param::KWh, kwh);
+            float Amph = ((float)ISA::Ah)/3600;//get Ah from isa sensor and post to parameter database
+            Param::SetFloat(Param::AMPh, Amph);
+        }
         float deltaVolts1 = (udc2 / 2) - udc3;
         float deltaVolts2 = (udc2 + udc3) - udc;
         Param::SetFloat(Param::deltaV, MAX(deltaVolts1, deltaVolts2));
