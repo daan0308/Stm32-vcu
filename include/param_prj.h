@@ -45,6 +45,7 @@
     PARAM_ENTRY(CAT_SETUP,     ChargerCan,   CAN_DEV,  0,      1,      1,      74 ) /* CAN bus for charger */ \
     PARAM_ENTRY(CAT_SETUP,     BMSCan,       CAN_DEV,  0,      1,      1,      89 ) /* CAN bus for BMS */ \
     PARAM_ENTRY(CAT_SETUP,     OBD2Can,      CAN_DEV,  0,      1,      0,      96 ) /* CAN bus for OBD2 */ \
+    PARAM_ENTRY(CAT_SETUP,     DisplayTx,    DISPTX,   0,      2,      0,      143 ) /* P911 display frames 0x64-0x68 */ \
     PARAM_ENTRY(CAT_SETUP,     CanMapCan,    CAN_DEV,  0,      1,      0,      97 ) /* CAN bus for CAN mapper */ \
     PARAM_ENTRY(CAT_SETUP,     DCDCCan,      CAN_DEV,  0,      1,      1,      107 ) /* CAN bus for DC-DC converter */ \
     PARAM_ENTRY(CAT_SETUP,     HeaterCan,    CAN_DEV,  0,      1,      1,      138 ) /* CAN bus for heater */ \
@@ -310,6 +311,7 @@
 #define CAN3SPD      "0=k33.3, 1=k500, 2=k100"
 #define TRNMODES     "0=Manual, 1=Auto"
 #define CAN_DEV      "0=CAN1, 1=CAN2"
+#define DISPTX       "0=Off, 1=CAN1, 2=CAN2"
 #define CAT_THROTTLE "Throttle"
 #define CAT_POWER    "Power Limit"
 #define CAT_CONTACT  "Contactor Control"

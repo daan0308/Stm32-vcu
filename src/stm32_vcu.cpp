@@ -84,6 +84,7 @@
 #include "emusbms.h"
 #include "outlanderCharger.h"
 #include "Can_OBD2.h"
+#include "DisplayCanTx.h"
 #include "dcdc.h"
 #include "TeslaDCDC.h"
 #include "BMW_E31.h"
@@ -515,6 +516,13 @@ static void Ms100Task(void)
         {
             IOMatrix::GetPin(IOMatrix::BATTTEMPVALVE)->Clear();
         }
+    }
+
+    //P911 display frames, fixed layout in firmware (replaces canmap entries)
+    int displayTx = Param::GetInt(Param::DisplayTx);
+    if(displayTx > 0)
+    {
+        DisplayCanTx::Task100Ms(canInterface[displayTx - 1]);
     }
 }
 
