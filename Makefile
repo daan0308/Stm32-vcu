@@ -38,13 +38,13 @@ CPPFLAGS    = -Os -Wall -Wextra -Ilibopeninv/include -Iinclude/ -Ilibopencm3/inc
 LDSCRIPT	= $(BINARY).ld
 LDFLAGS  = -Llibopencm3/lib -T$(LDSCRIPT) -march=armv7 -nostartfiles -Wl,--gc-sections,-Map,linker.map
 OBJSL		= $(BINARY).o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
-           my_string.o digio.o my_fp.o printf.o anain.o throttle.o isa_shunt.o BMW_E65.o GS450H.o temp_meas.o \
-           BMW_E39.o Can_VAG.o Can_OI.o MCP2515.o CANSPI.o outlanderinverter.o canhardware.o canmap.o \
-           param_save.o errormessage.o stm32_can.o leafinv.o utils.o terminalcommands.o \
-           amperaheater.o subaruvehicle.o iomatrix.o bmw_sbox.o teslaCharger.o vag_sbox.o \
-           daisychainbms.o simpbms.o Can_OBD2.o cansdo.o TeslaDCDC.o BMW_E31.o F30_Lever.o \
-           RearOutlanderinverter.o linbus.o VWheater.o JLR_G1.o JLR_G2.o Foccci.o digipot.o\
-		   OutlanderHeartBeat.o E65_Lever.o leafbms.o V_Classic.o kangoobms.o OutlanderCanHeater.o NissLeafMng.o\
+           my_string.o digio.o my_fp.o printf.o anain.o throttle.o isa_shunt.o temp_meas.o \
+           Can_OI.o MCP2515.o CANSPI.o canhardware.o canmap.o \
+           param_save.o errormessage.o stm32_can.o utils.o terminalcommands.o \
+           amperaheater.o iomatrix.o bmw_sbox.o teslaCharger.o vag_sbox.o \
+           daisychainbms.o simpbms.o Can_OBD2.o cansdo.o TeslaDCDC.o \
+           linbus.o VWheater.o Foccci.o digipot.o\
+		   OutlanderHeartBeat.o E65_Lever.o leafbms.o V_Classic.o kangoobms.o OutlanderCanHeater.o \
 		   emusbms.o benderimdsimple.o DisplayCanTx.o
            
 OBJS     = $(patsubst %.o,$(OUT_DIR)/%.o, $(OBJSL))

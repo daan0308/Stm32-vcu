@@ -57,10 +57,8 @@ void clock_setup(void)
     rcc_periph_clock_enable(RCC_GPIOD);
     rcc_periph_clock_enable(RCC_GPIOE);
     rcc_periph_clock_enable(RCC_USART3);
-    rcc_periph_clock_enable(RCC_USART2);//GS450H Inverter Comms
 	rcc_periph_clock_enable(RCC_USART1);//LIN Comms
     rcc_periph_clock_enable(RCC_TIM1); //GS450H oil pump pwm
-    rcc_periph_clock_enable(RCC_TIM2); //GS450H 500khz usart clock
     rcc_periph_clock_enable(RCC_TIM3); //PWM outputs
     rcc_periph_clock_enable(RCC_TIM4); //Scheduler
     rcc_periph_clock_enable(RCC_DMA1);  //ADC, and UARTS
@@ -125,35 +123,10 @@ void usart1_setup(void)
 }
 
 /**
-* Setup USART2 500000 8N1 for Toyota inverter comms
-*/
-void usart2_setup(void)
-{
-    /* Setup GPIO pin GPIO_USART2_TX and GPIO_USART2_RX. */
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
-    gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
-                  GPIO_CNF_INPUT_FLOAT, GPIO_USART2_RX);
-    usart_set_baudrate(USART2, 500000);
-    usart_set_databits(USART2, 8);
-    usart_set_stopbits(USART2, USART_STOPBITS_1);
-    usart_set_mode(USART2, USART_MODE_TX_RX);
-    usart_set_parity(USART2, USART_PARITY_NONE);
-    usart_set_flow_control(USART2, USART_FLOWCONTROL_NONE);
-    usart_enable(USART2);
-}
-
-/**
 * Enable Timer refresh and break interrupts
 */
 void nvic_setup(void)
 {
-    nvic_enable_irq(NVIC_DMA1_CHANNEL7_IRQ);
-    nvic_set_priority(NVIC_DMA1_CHANNEL7_IRQ, 0xf0);//usart2_TX
-
-    nvic_enable_irq(NVIC_DMA1_CHANNEL6_IRQ);
-    nvic_set_priority(NVIC_DMA1_CHANNEL6_IRQ, 0xf0);//usart2_RX low priority int
-
     // nvic_enable_irq(NVIC_DMA1_CHANNEL3_IRQ);
     //nvic_set_priority(NVIC_DMA1_CHANNEL3_IRQ, 0x20);//usart3_RX high priority int
 
@@ -212,35 +185,6 @@ void tim_setup()
 
 }
 
-void tim2_setup()
-{
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Code for timer 2 to create usart 2 clock for Toyota hybrid comms
-    ////////////////////////////////////////////////////////////////////////
-    gpio_set_mode(GPIOA,GPIO_MODE_OUTPUT_50_MHZ,	// High speed
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,GPIO1);	// GPIOA1=TIM2.CH2 clock for usart2
-
-    // TIM2:
-    timer_disable_counter(TIM2);
-//	timer_reset(TIM2);
-
-    timer_set_mode(TIM2,
-                   TIM_CR1_CKD_CK_INT,
-                   TIM_CR1_CMS_EDGE,
-                   TIM_CR1_DIR_UP);
-    timer_set_prescaler(TIM2,0);
-    timer_enable_preload(TIM2);
-    timer_continuous_mode(TIM2);
-    timer_set_period(TIM2,143);//500khz
-
-    timer_disable_oc_output(TIM2,TIM_OC2);
-    timer_set_oc_mode(TIM2,TIM_OC2,TIM_OCM_PWM1);
-    timer_enable_oc_output(TIM2,TIM_OC2);
-
-    timer_set_oc_value(TIM2,TIM_OC2,72);//50% duty
-    timer_enable_counter(TIM2);
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-}
 
 
 void tim3_setup()

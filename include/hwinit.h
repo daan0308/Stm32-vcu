@@ -30,12 +30,10 @@ extern "C"
 
 void clock_setup(void);
 void usart_setup(void);
-void usart2_setup(void);
 void usart1_setup(void);
 void nvic_setup(void);
 void rtc_setup(void);
 void tim_setup(void);
-void tim2_setup(void);
 void tim3_setup(void);
 void spi2_setup(void);
 void spi3_setup(void);

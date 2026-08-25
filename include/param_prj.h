@@ -80,8 +80,6 @@
     PARAM_ENTRY(CAT_THROTTLE,  throtdead,   "%",       0,      50,     10,     76 ) /* throttle deadband around zero */ \
     PARAM_ENTRY(CAT_THROTTLE,  RegenBrakeLight,   "%",    -100,     0,     -15,      128 ) /* throttle % below which brake light activates */ \
     PARAM_ENTRY(CAT_THROTTLE,  throtrpmfilt,   "rpm/10ms",  0.1,    200,    15,    131 ) /* RPM filter time constant for throttle */ \
-    PARAM_ENTRY(CAT_LEXUS,     Gear,        LOWHIGH,   0,      3,      0,      27 ) /* Lexus/GS450H gearbox gear selection */ \
-    PARAM_ENTRY(CAT_LEXUS,     OilPump,     "%",       0,      100,    50,     28 ) /* Lexus/GS450H oil pump duty cycle */ \
     PARAM_ENTRY(CAT_CRUISE,    cruisestep,  "rpm",     1,      1000,   200,    29 ) /* cruise control RPM increment per button press */ \
     PARAM_ENTRY(CAT_CRUISE,    cruiseramp,  "rpm/100ms",1,     1000,   20,     30 ) /* cruise control ramp rate */ \
     PARAM_ENTRY(CAT_CRUISE,    regenlevel,  "",        0,      3,      2,      31 ) /* regen level when cruise is active */ \
@@ -273,18 +271,18 @@
 #define PINFUNCS     "0=None, 1=ChaDeMoAlw, 2=OBCEnable, 3=HeaterEnable, 4=RunIndication, 5=WarnIndication," \
                      "6=CoolantPump, 7=NegContactor, 8=BrakeLight, 9=ReverseLight, 10=HeatReq, 11=HVRequest," \
                      "12=DCFCRequest, 13=BrakeVacPump, 14=CoolingFan, 15=HvActive, 16=PwmTim3, 17=CpSpoof,"\
-                     "18=GS450pump, 19=IMD_Ok, 20=CoolantPumpBattery, 21=AlwaysOn, 22=BattTempGt15"
+                     "19=IMD_Ok, 20=CoolantPumpBattery, 21=AlwaysOn, 22=BattTempGt15"
 #define APINFUNCS    "0=None, 1=ProxPilot, 2=BrakeVacSensor, 3=HeaterPot"
 #define IMDTYPE      "0=None, 1=SimpleBender"
-#define SHIFTERS     "0=None, 1=BMW_F30, 2=JLR_G1, 3=JLR_G2, 4=BMW_E65"
+#define SHIFTERS     "0=None, 4=BMW_E65"
 #define SHNTYPE      "0=None, 1=ISA, 2=SBOX, 3=VAG"
 #define DMODES       "0=CLOSED, 1=OPEN, 2=ERROR, 3=INVALID"
 #define POTMODES     "0=SingleChannel, 1=DualChannel"
 #define BTNSWITCH    "0=Button, 1=Switch, 2=CAN"
 #define DIRMODES     "0=Button, 1=Switch, 2=ButtonReversed, 3=SwitchReversed, 4=DefaultForward"
-#define INVMODES     "0=None, 1=Leaf_Gen1, 2=GS450H, 3=UserCAN, 4=OpenI, 5=Prius_Gen3, 6=Outlander, 7=GS300H, 8=RearOutlander"
+#define INVMODES     "0=None, 3=UserCAN, 4=OpenI"
 #define PLTMODES     "0=Absent, 1=ACStd, 2=ACchg, 3=Error, 4=CCS_Not_Rdy, 5=CCS_Rdy, 6=Static"
-#define VEHMODES     "0=BMW_E46, 1=BMW_E6x+, 2=Classic, 3=None, 5=BMW_E39, 6=VAG, 7=Subaru, 8=BMW_E31"
+#define VEHMODES     "2=Classic, 4=None"
 #define BMSMODES     "0=Off, 1=SimpBMS, 2=TiDaisychainSingle, 3=TiDaisychainDual, 4=LeafBms, 5=RenaultKangoo33, 6=EMUS"
 #define BMSPROTSRC   "0=VCU, 1=BMS"
 #define OPMODES      "0=Off, 1=Run, 2=Precharge, 3=PchFail, 4=Charge"
@@ -322,7 +320,6 @@
 #define CAT_HEATER   "Heater Module"
 #define CAT_BMS      "Battery Management"
 #define CAT_CRUISE   "Cruise Control"
-#define CAT_LEXUS    "Gearbox Control"
 #define CAT_CHARGER  "Charger Control"
 #define CAT_DCDC     "DC-DC Converter"
 #define CAT_SHUNT    "ISA Shunt Control"
@@ -374,14 +371,8 @@ enum _dirmodes
 enum InvModes
 {
     NoInv =0,
-    Leaf_Gen1 = 1,
-    GS450H = 2,
     UserCAN = 3,
-    OpenI = 4,
-    Prius_Gen3 = 5,
-    Outlander = 6,
-    GS300H = 7,
-    RearOutlander = 8
+    OpenI = 4
 };
 
 //Values kept sparse: removed options keep their old numbers so stored
@@ -427,11 +418,7 @@ enum DCDCModes
 enum ShifterModes
 {
     NoShifter = 0,
-    BMWF30 = 1,
-    JLRG1 = 2,
-    JLRG2 =3,
     BMWE65 =4
-
 };
 
 enum IMDTypes
@@ -456,14 +443,8 @@ enum Gear
 
 enum vehicles
 {
-    vBMW_E46 = 0,
-    vBMW_E65 = 1,
     Classic = 2, //used as a flag
-    None = 4,
-    vBMW_E39 = 5,
-    vVAG = 6,
-    vSUBARU = 7,
-    vBMW_E31 = 8
+    None = 4
 };
 
 enum _potmodes

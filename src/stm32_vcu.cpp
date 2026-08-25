@@ -43,15 +43,8 @@
 #include "printf.h"
 #include "stm32scheduler.h"
 #include "cansdo.h"
-#include "leafinv.h"
 #include "isa_shunt.h"
-#include "BMW_E39.h"
-#include "BMW_E65.h"
-#include "subaruvehicle.h"
 #include "Can_OI.h"
-#include "outlanderinverter.h"
-#include "Can_VAG.h"
-#include "GS450H.h"
 #include "throttle.h"
 #include "utils.h"
 #include "teslaCharger.h"
@@ -81,19 +74,14 @@
 #include "DisplayCanTx.h"
 #include "dcdc.h"
 #include "TeslaDCDC.h"
-#include "BMW_E31.h"
 #include "shifter.h"
 #include "digipot.h"
-#include "F30_Lever.h"
 #include "E65_Lever.h"
-#include "JLR_G1.h"
-#include "JLR_G2.h"
 #include "no_Lever.h"
 #include "Foccci.h"
 #include "NoInverter.h"
 #include "linbus.h"
 #include "VWheater.h"
-#include "rearoutlanderinverter.h"
 #include "NoVehicle.h"
 #include "V_Classic.h"
 #include "kangoobms.h"
@@ -139,28 +127,17 @@ alarm=0;			// != 0 when alarm is pending
 static uint16_t rlyDly=25;
 
 // Instantiate Classes
-static BMW_E31 e31Vehicle;
-static BMW_E65 e65Vehicle;
-static BMW_E39 e39Vehicle;
-static Can_VAG vagVehicle;
-static SubaruVehicle subaruVehicle;
-static GS450HClass gs450Inverter;
-static LeafINV leafInv;
 static teslaCharger ChargerTesla;
 static notused UnUsed;
 static noCharger nochg;
 static FoccciClass Focccican;
 static Can_OI openInv;
 static NoInverterClass NoInverter;
-static OutlanderInverter outlanderInv;
 static noHeater Heaternone;
 static AmperaHeater amperaHeater;
 static OutlanderCanHeater outlanderCanHeater;
 static no_Lever NoGearLever;
-static F30_Lever F30GearLever;
 static E65_Lever E65GearLever;
-static JLR_G1 JLRG1shift;
-static JLR_G2 JLRG2shift;
 static vwHeater heaterVW;
 static NoVehicle VehicleNone;
 static V_Classic classVehicle;
@@ -184,7 +161,6 @@ static IMD IMDNone;
 static BenderIMDSimple IMDBenderSimple;
 static IMD* selectedIMD = &IMDNone;
 static Shifter shifterNone;
-static RearOutlanderInverter rearoutlanderInv;
 static LinBus* lin;
 static EmusBMS BMSEmus;
 
@@ -684,10 +660,6 @@ static void Ms10Task(void)
         {
             if(selectedInverter != &openInv)DigIo::inv_out.Set();//inverter power on but not if we are in charge mode and not if OI
         }
-        else if((Param::GetInt(Param::ShuntType) == 0) && selectedInverter == &leafInv)//Shunt 0 + Leaf is precharge using leaf inverter voltage
-        {
-            DigIo::inv_out.Set(); //inverter power on
-        }
         IOMatrix::GetPin(IOMatrix::NEGCONTACTOR)->Set();
         IOMatrix::GetPin(IOMatrix::COOLANTPUMP)->Set();
         IOMatrix::GetPin(IOMatrix::COOLANTPUMPBATTERY)->Set();
@@ -788,31 +760,11 @@ static void UpdateInv()
     case InvModes::NoInv:
         selectedInverter = &NoInverter;
         break;
-    case InvModes::Leaf_Gen1:
-        selectedInverter = &leafInv;
-        break;
-    case InvModes::GS450H:
-        selectedInverter = &gs450Inverter;
-        gs450Inverter.SetGS450H();
-        break;
-    case InvModes::GS300H:
-        selectedInverter = &gs450Inverter;
-        gs450Inverter.SetGS300H();
-        break;
-    case InvModes::Prius_Gen3:
-        selectedInverter = &gs450Inverter;
-        gs450Inverter.SetPrius();
-        break;
-    case InvModes::Outlander:
-        selectedInverter = &outlanderInv;
-        OutlanderCAN = true;
-        break;
     case InvModes::OpenI:
         selectedInverter = &openInv;
         break;
-    case InvModes::RearOutlander:
-        selectedInverter = &rearoutlanderInv;
-        OutlanderCAN = true;
+    default:
+        selectedInverter = &NoInverter;
         break;
     }
     //This will call SetCanFilters() via the Clear Callback
@@ -824,31 +776,11 @@ static void UpdateVehicle()
 {
     switch (Param::GetInt(Param::Vehicle))
     {
-    case vehicles::None:
-        selectedVehicle = &VehicleNone;
-        break;
-    case vehicles::vBMW_E39:
-        selectedVehicle = &e39Vehicle;
-        e39Vehicle.SetE46(false);
-        break;
-    case vehicles::vBMW_E46:
-        selectedVehicle = &e39Vehicle;
-        e39Vehicle.SetE46(true);
-        break;
-    case vehicles::vBMW_E65:
-        selectedVehicle = &e65Vehicle;
-        break;
-    case vehicles::vVAG:
-        selectedVehicle = &vagVehicle;
-        break;
-    case vehicles::vSUBARU:
-        selectedVehicle = &subaruVehicle;
-        break;
-    case vehicles::vBMW_E31:
-        selectedVehicle = &e31Vehicle;
-        break;
     case vehicles::Classic:
         selectedVehicle = &classVehicle;
+        break;
+    default:
+        selectedVehicle = &VehicleNone;
         break;
     }
     //This will call SetCanFilters() via the Clear Callback
@@ -986,18 +918,6 @@ static void UpdateShifter()
         selectedShifter = &shifterNone;
         break;
 
-    case ShifterModes::BMWF30:
-        selectedShifter = &F30GearLever;
-        break;
-
-    case ShifterModes::JLRG1:
-        selectedShifter = &JLRG1shift;
-        break;
-
-    case ShifterModes::JLRG2:
-        selectedShifter = &JLRG2shift;
-        break;
-
     case ShifterModes::BMWE65:
         selectedShifter = &E65GearLever;
         break;
@@ -1130,14 +1050,7 @@ void Param::Change(Param::PARAM_NUM paramNum)
 
     if(Param::GetInt(Param::reversemotor) != 0)
     {
-        if(Param::GetInt(Param::Inverter) == InvModes::RearOutlander)
-        {
-
-        }
-        else
-        {
-            Param::SetInt(Param::reversemotor,0);
-        }
+        Param::SetInt(Param::reversemotor,0);
     }
 
     Throttle::potmin[0] = Param::GetInt(Param::potmin);
@@ -1275,7 +1188,6 @@ extern "C" int main(void)
     rtc_setup();
     ConfigureVariantIO();
     gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_CAN2_REMAP | AFIO_MAPR_TIM1_REMAP_FULL_REMAP);//32f107
-    usart2_setup();//TOYOTA HYBRID INVERTER INTERFACE
     nvic_setup();
     parm_load();
     spi2_setup();
