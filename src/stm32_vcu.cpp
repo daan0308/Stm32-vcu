@@ -55,9 +55,7 @@
 #include "throttle.h"
 #include "utils.h"
 #include "teslaCharger.h"
-#include "i3LIM.h"
 #include "CANSPI.h"
-#include "chademo.h"
 #include "heater.h"
 #include "amperaheater.h"
 #include "inverter.h"
@@ -68,12 +66,9 @@
 #include "iomatrix.h"
 #include "bmw_sbox.h"
 #include "vag_sbox.h"
-#include "NissanPDM.h"
 #include "chargerint.h"
 #include "notused.h"
 #include "nocharger.h"
-#include "extCharger.h"
-#include "amperacharger.h"
 #include "noHeater.h"
 #include "benderimdsimple.h"
 #include "imd.h"
@@ -82,7 +77,6 @@
 #include "leafbms.h"
 #include "daisychainbms.h"
 #include "emusbms.h"
-#include "outlanderCharger.h"
 #include "Can_OBD2.h"
 #include "DisplayCanTx.h"
 #include "dcdc.h"
@@ -95,12 +89,10 @@
 #include "JLR_G1.h"
 #include "JLR_G2.h"
 #include "no_Lever.h"
-#include "CPC.h"
 #include "Foccci.h"
 #include "NoInverter.h"
 #include "linbus.h"
 #include "VWheater.h"
-#include "ElconCharger.h"
 #include "rearoutlanderinverter.h"
 #include "NoVehicle.h"
 #include "V_Classic.h"
@@ -154,17 +146,9 @@ static Can_VAG vagVehicle;
 static SubaruVehicle subaruVehicle;
 static GS450HClass gs450Inverter;
 static LeafINV leafInv;
-static NissanPDM chargerPDM;
 static teslaCharger ChargerTesla;
-static ElconCharger ChargerElcon;
 static notused UnUsed;
 static noCharger nochg;
-static extCharger chgdigi;
-static amperaCharger ampChg;
-static outlanderCharger outChg;
-static FCChademo chademoFC;
-static i3LIMClass LIMFC;
-static CPCClass CPCcan;
 static FoccciClass Focccican;
 static Can_OI openInv;
 static NoInverterClass NoInverter;
@@ -183,7 +167,7 @@ static V_Classic classVehicle;
 static Inverter* selectedInverter = &openInv;
 static Vehicle* selectedVehicle = &VehicleNone;
 static Heater* selectedHeater = &Heaternone;
-static Chargerhw* selectedCharger = &chargerPDM;
+static Chargerhw* selectedCharger = &nochg;
 static Chargerint* selectedChargeInt = &UnUsed;
 static Shifter* selectedShifter = &NoGearLever;
 static BMS BMSnone;
@@ -283,12 +267,7 @@ static void Ms200Task(void)
         chargeMode = false;  //no charge mode
     }
 
-    //in chademo , we do not want to run the 200ms task unless in dc charge mode
-    if(targetChgint == ChargeInterfaces::Chademo && chargeModeDC) selectedChargeInt->Task200Ms();
-    //In case of the LIM we want to send it all the time if lim in use
-    if((targetChgint == ChargeInterfaces::i3LIM) || (targetChgint == ChargeInterfaces::Unused) || (targetChgint == ChargeInterfaces::CPC)|| (targetChgint == ChargeInterfaces::Foccci)) selectedChargeInt->Task200Ms();
-    //and just to be thorough ...
-    if(targetChgint == ChargeInterfaces::Unused) selectedChargeInt->Task200Ms();
+    if((targetChgint == ChargeInterfaces::Unused) || (targetChgint == ChargeInterfaces::Foccci)) selectedChargeInt->Task200Ms();
 
 
 
@@ -444,7 +423,7 @@ static void Ms100Task(void)
     int32_t IsaTemp=ISA::Temperature;
     Param::SetInt(Param::tmpaux,IsaTemp);
 
-    if(targetChgint == ChargeInterfaces::i3LIM || targetChgint == ChargeInterfaces::Foccci || chargeModeDC) selectedChargeInt->Task100Ms();// send the 100ms task request for the lim all the time and for others if in DC charge mode
+    if(targetChgint == ChargeInterfaces::Foccci || chargeModeDC) selectedChargeInt->Task100Ms();// send the 100ms task request for the lim all the time and for others if in DC charge mode
 
     if(selectedChargeInt->DCFCRequest(RunChg))//Request to run dc fast charge
     {
@@ -641,10 +620,6 @@ static void Ms10Task(void)
     selectedDCDC->Task10Ms();
     selectedShifter->Task10Ms();
     if(opmode==MOD_CHARGE)
-    {
-        selectedCharger->Task10Ms();
-    }
-    else if (Param::GetInt(Param::chargemodes) == ChargeModes::Leaf_PDM)
     {
         selectedCharger->Task10Ms();
     }
@@ -890,26 +865,12 @@ static void UpdateCharger()
         chargeMode = false;
         selectedCharger = &nochg;
         break;
-    case ChargeModes::EXT_DIGI:
-        selectedCharger = &chgdigi;
-        break;
-    case ChargeModes::Volt_Ampera:
-        selectedCharger = &ampChg;
-        break;
-    case ChargeModes::Leaf_PDM:
-        selectedCharger = &chargerPDM;
-        break;
     case ChargeModes::TeslaOI:
         selectedCharger = &ChargerTesla;
         break;
-    case ChargeModes::Out_lander:
-        selectedCharger = &outChg;
-        OutlanderCAN = true;
+    default:
+        selectedCharger = &nochg;
         break;
-    case ChargeModes::Elcon:
-        selectedCharger = &ChargerElcon;
-        break;
-
     }
     //This will call SetCanFilters() via the Clear Callback
     canInterface[0]->ClearUserMessages();
@@ -924,17 +885,11 @@ static void UpdateChargeInt()
     case ChargeInterfaces::Unused:
         selectedChargeInt = &UnUsed;
         break;
-    case ChargeInterfaces::Chademo:
-        selectedChargeInt = &chademoFC;
-        break;
-    case ChargeInterfaces::i3LIM:
-        selectedChargeInt = &LIMFC;
-        break;
-    case ChargeInterfaces::CPC:
-        selectedChargeInt = &CPCcan;
-        break;
     case ChargeInterfaces::Foccci:
         selectedChargeInt = &Focccican;
+        break;
+    default:
+        selectedChargeInt = &UnUsed;
         break;
     }
     //This will call SetCanFilters() via the Clear Callback

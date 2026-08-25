@@ -305,9 +305,9 @@
 #define CDMSTAT      "1=Charging, 2=Malfunction, 4=ConnLock, 8=BatIncomp, 16=SystemMalfunction, 32=Stop"
 #define HTTYPE       "0=None, 1=Ampera, 2=VW, 3=OutlanderCan"
 #define HTCTRL       "0=Disable, 1=Enable, 2=Timer"
-#define CHGMODS      "0=Off, 1=EXT_DIGI, 2=Volt_Ampera, 3=Leaf_PDM, 4=TeslaOI, 5=Out_lander, 6=Elcon"
+#define CHGMODS      "0=Off, 4=TeslaOI"
 #define CHGCTRL      "0=Enable, 1=Disable, 2=Timer"
-#define CHGINT       "0=Unused, 1=i3LIM, 2=Chademo, 3=CPC, 4=Foccci"
+#define CHGINT       "0=Unused, 4=Foccci"
 #define CAN3SPD      "0=k33.3, 1=k500, 2=k100"
 #define TRNMODES     "0=Manual, 1=Auto"
 #define CAN_DEV      "0=CAN1, 1=CAN2"
@@ -384,23 +384,17 @@ enum InvModes
     RearOutlander = 8
 };
 
+//Values kept sparse: removed options keep their old numbers so stored
+//parameter sets stay valid (unknown values fall back to Off/Unused)
 enum ChargeModes
 {
     Off = 0,
-    EXT_DIGI = 1,
-    Volt_Ampera = 2,
-    Leaf_PDM = 3,
-    TeslaOI = 4,
-    Out_lander = 5,
-    Elcon = 6
+    TeslaOI = 4
 };
 
 enum ChargeInterfaces
 {
     Unused = 0,
-    i3LIM = 1,
-    Chademo = 2,
-    CPC = 3,
     Foccci = 4
 };
 
