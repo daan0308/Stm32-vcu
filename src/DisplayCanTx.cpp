@@ -24,7 +24,7 @@
  * values little endian. Keep both sides in sync when changing anything here.
  *
  * 0x64 VCU status:   opmode u8 | status u16 | dir i8 | T15 u8 | derate u8 | - | -
- * 0x65 values101:    idc i16 (A) | SOC u8 | speed u16 (kph) | tmpm u8 | torque u16
+ * 0x65 values101:    idc i16 (x10 A) | SOC u8 | speed u16 (kph) | tmphs u8 | torque u16
  * 0x67 values103:    range u16 (x10 km) | consumption u16 (Wh/km) |
  *                    BMS_Vmin u16 (x100 V) | BMS_Vmax u16 (x100 V)
  * 0x68 values104:    power i16 (kW) | BMS_Tmin i16 (C) | udc u16 (V) |
@@ -48,7 +48,7 @@ void DisplayCanTx::Task100Ms(CanHardware* can)
    can->Send(0x64, (uint32_t*)data, 8);
 
    // 0x65 — motor / drive values
-   int16_t  idc    = (int16_t)Param::GetFloat(Param::idc);
+   int16_t  idc    = (int16_t)(Param::GetFloat(Param::idc) * 10.0f);
    uint16_t speed  = Param::GetInt(Param::Veh_Speed);
    uint16_t torque = Param::GetInt(Param::torque);
    data[0] = idc & 0xFF;
@@ -56,7 +56,7 @@ void DisplayCanTx::Task100Ms(CanHardware* can)
    data[2] = Param::GetInt(Param::SOC);
    data[3] = speed & 0xFF;
    data[4] = speed >> 8;
-   data[5] = Param::GetInt(Param::tmpm);
+   data[5] = Param::GetInt(Param::tmphs);
    data[6] = torque & 0xFF;
    data[7] = torque >> 8;
    can->Send(0x65, (uint32_t*)data, 8);

@@ -59,10 +59,11 @@ void Can_OI::DecodeCAN(int id, uint32_t* data)
    {
       speed=((bytes[1]<<8)|(bytes[0]));
    }
-   else if (id == 0x19A)// THIS MSG CONTAINS INVERTER HEATSINK TEMP
+   else if (id == 0x19A)// THIS MSG CONTAINS INVERTER HEATSINK + MOTOR TEMP
    {
-      inv_temp = ((bytes[1]<<8)|(bytes[0]))/10;//INVERTER TEMP
-      motor_temp = 0;//MOTOR TEMP
+      //OI default canmap: tmphs bits 0-15 x10, tmpm bits 16-31 x10
+      inv_temp   = ((bytes[1]<<8)|(bytes[0]))/10;//INVERTER TEMP
+      motor_temp = ((bytes[3]<<8)|(bytes[2]))/10;//MOTOR TEMP
    }
 
       else if (id == 0x1AE)// THIS MSG CONTAINS OPMODE
