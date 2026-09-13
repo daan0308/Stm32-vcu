@@ -92,6 +92,7 @@
 #include "digipot.h"
 #include "F30_Lever.h"
 #include "E65_Lever.h"
+#include "iBooster.h"
 #include "JLR_G1.h"
 #include "JLR_G2.h"
 #include "no_Lever.h"
@@ -395,6 +396,7 @@ static void Ms100Task(void)
     selectedShifter->Task100Ms();
     selectedHeater->Task100Ms();
     selectedIMD->Task100Ms();
+    IBooster::Task100Ms(); //stale-frame timeout for iBooster brake signal
     canMap->SendAll();
 
     if(OutlanderCAN == true)
@@ -1103,6 +1105,8 @@ static void SetCanFilters()
     canOBD2.SetCanInterface(obd2_can);
     selectedHeater->SetCanInterface(heater_can);
 
+    if (Param::GetBool(Param::iBooster)) IBooster::RegisterCanMessages(vehicle_can);//Bosch iBooster brake status
+
     if (Param::GetInt(Param::ShuntType) == 1)  ISA::RegisterCanMessages(shunt_can);//select isa shunt
     if (Param::GetInt(Param::ShuntType) == 2)  SBOX::RegisterCanMessages(shunt_can);//select bmw sbox
     if (Param::GetInt(Param::ShuntType) == 3)  VWBOX::RegisterCanMessages(shunt_can);//select vw sbox
@@ -1149,6 +1153,7 @@ void Param::Change(Param::PARAM_NUM paramNum)
     case Param::ShuntCan:
     case Param::LimCan:
     case Param::ChargerCan:
+    case Param::iBooster:
         canInterface[0]->ClearUserMessages();
         canInterface[1]->ClearUserMessages();
         break;
@@ -1253,6 +1258,7 @@ static bool CanCallback(uint32_t id, uint32_t data[2], uint8_t dlc) //This is wh
         selectedDCDC->DecodeCAN(id, (uint8_t*)data);
         selectedShifter->DecodeCAN(id,data);
         selectedHeater->DecodeCAN(id, data);
+        if (Param::GetBool(Param::iBooster)) IBooster::DecodeCAN(id, data);
         break;
     }
     return false;
