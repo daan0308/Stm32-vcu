@@ -23,15 +23,23 @@
 #include <stdint.h>
 #include "canhardware.h"
 
-/* Bosch iBooster Gen2 (Tesla type) listener.
+/* Bosch iBooster brake-by-wire booster listener.
  *
- * Decodes the IBST_status frame (0x39D, 10 ms cycle) and exposes the
- * driver-brake-apply state so the brake light output and regen logic can
- * react to pedal presses reported over CAN.
+ * Decodes the driver-brake-apply state from the iBooster status frame so the
+ * brake light output and regen logic can react to pedal presses reported
+ * over CAN. The protocol variant is selected with Param::iBooster:
+ * 0 = Off, 1 = Bosch native (0x219), 2 = Tesla style (0x39D).
  */
 class IBooster
 {
 public:
+    enum ibooster_types
+    {
+        IBOOSTER_OFF = 0,
+        IBOOSTER_BOSCH = 1,
+        IBOOSTER_TESLA = 2
+    };
+
     static void RegisterCanMessages(CanHardware* can);
     static void DecodeCAN(uint32_t id, uint32_t data[2]);
     static void Task100Ms();

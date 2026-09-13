@@ -52,7 +52,7 @@
     PARAM_ENTRY(CAT_SETUP,     MotActive,    MotorsAct,0,      3,      0,      129 ) /* active motor selection (MG1, MG2 or both) */ \
     PARAM_ENTRY(CAT_SETUP,     SpeedFactor, "RevInv/RevWheel", 0, 500, 84,     900 ) \
     PARAM_ENTRY(CAT_SETUP,     IMD_Type,     IMDTYPE,  0,      2,      0,      901)  \
-    PARAM_ENTRY(CAT_SETUP,     iBooster,     ONOFF,    0,      1,      0,      144 ) /* listen for Bosch iBooster brake status on vehicle CAN */ \
+    PARAM_ENTRY(CAT_SETUP,     iBooster,     IBSTTYPE, 0,      2,      0,      144 ) /* iBooster type for brake status on vehicle CAN */ \
     PARAM_ENTRY(CAT_THROTTLE,  potmin,      "dig",     0,      4095,   0,      7  ) /* throttle pot ADC minimum */ \
     PARAM_ENTRY(CAT_THROTTLE,  potmax,      "dig",     0,      4095,   4095,   8  ) /* throttle pot ADC maximum */ \
     PARAM_ENTRY(CAT_THROTTLE,  pot2min,     "dig",     0,      4095,   4095,   9  ) /* second throttle pot ADC minimum (dual-channel) */ \
@@ -277,6 +277,7 @@
                      "18=GS450pump, 19=IMD_Ok, 20=CoolantPumpBattery, 21=AlwaysOn, 22=BattTempGt15"
 #define APINFUNCS    "0=None, 1=ProxPilot, 2=BrakeVacSensor, 3=HeaterPot"
 #define IMDTYPE      "0=None, 1=SimpleBender"
+#define IBSTTYPE     "0=Off, 1=Bosch, 2=Tesla"
 #define SHIFTERS     "0=None, 1=BMW_F30, 2=JLR_G1, 3=JLR_G2, 4=BMW_E65"
 #define SHNTYPE      "0=None, 1=ISA, 2=SBOX, 3=VAG"
 #define DMODES       "0=CLOSED, 1=OPEN, 2=ERROR, 3=INVALID"

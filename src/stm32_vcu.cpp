@@ -1105,7 +1105,7 @@ static void SetCanFilters()
     canOBD2.SetCanInterface(obd2_can);
     selectedHeater->SetCanInterface(heater_can);
 
-    if (Param::GetBool(Param::iBooster)) IBooster::RegisterCanMessages(vehicle_can);//Bosch iBooster brake status
+    if (Param::GetInt(Param::iBooster) > 0) IBooster::RegisterCanMessages(vehicle_can);//Bosch iBooster brake status
 
     if (Param::GetInt(Param::ShuntType) == 1)  ISA::RegisterCanMessages(shunt_can);//select isa shunt
     if (Param::GetInt(Param::ShuntType) == 2)  SBOX::RegisterCanMessages(shunt_can);//select bmw sbox
@@ -1258,7 +1258,7 @@ static bool CanCallback(uint32_t id, uint32_t data[2], uint8_t dlc) //This is wh
         selectedDCDC->DecodeCAN(id, (uint8_t*)data);
         selectedShifter->DecodeCAN(id,data);
         selectedHeater->DecodeCAN(id, data);
-        if (Param::GetBool(Param::iBooster)) IBooster::DecodeCAN(id, data);
+        if (Param::GetInt(Param::iBooster) > 0) IBooster::DecodeCAN(id, data);
         break;
     }
     return false;

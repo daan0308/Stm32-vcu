@@ -18,26 +18,32 @@
  */
 
 #include "iBooster.h"
+#include "params.h"
 
-/* IBST_status frame from the Bosch iBooster Gen2 */
-#define IBST_STATUS_ID        0x39D
-
-/* !!! TODO: VERIFY AGAINST A CAN TRACE OF YOUR IBOOSTER BEFORE RELYING ON THIS !!!
+/* iBooster protocol variants, selected with Param::iBooster:
  *
- * Layout below is the commonly reported Tesla Model 3 "IBST_status" layout:
- *   driverBrakeApply = byte 5, bits 0-1
- *   value 2 = DRIVER_APPLYING_BRAKES, 1 = NOT_APPLIED, 0 = FAULT/INIT
+ * 1 = Bosch: native Bosch protocol. Layout verified 2026-09-13 against a CAN
+ *     trace of this car's unit (ibooster.asc, 7 pedal presses):
+ *       0x219, 5 bytes, ~20 ms cycle
+ *       byte 0 = 0x24 pedal released, 0x25 driver applying brakes (bit 0)
+ *       byte 1 = unit state (0x2A init, 0x59 ready)
+ *       byte 2 = rolling counter, byte 3 = checksum
+ *     The faster 0x214 frame carries the same flag (byte 2 bit 3) plus an
+ *     11-bit rod position in bytes 1-2, should proportional detection ever
+ *     be needed.
  *
- * To verify: log the bus with the pedal released and pressed, and check which
- * byte/bits of 0x39D change. Update the three constants below to match.
+ * 2 = Tesla: Tesla Model 3 style IBST_status frame:
+ *       0x39D, byte 5 bits 0-1: 2 = driver applying, 1 = not applied,
+ *       0 = fault/init.
+ *     NOTE: commonly reported community layout, not verified against a real
+ *     unit yet - trace a pedal press before relying on it.
  */
-#define DRIVER_BRAKE_BYTE     5
-#define DRIVER_BRAKE_MASK     0x03
-#define DRIVER_BRAKE_APPLIED  2
+#define IBST_BOSCH_ID         0x219
+#define IBST_TESLA_ID         0x39D
 
-/* Frame arrives every 10 ms; declare the signal stale after 500 ms without one.
- * On timeout BrakeApplied() returns false so the hardwired brake switch and
- * regen-based logic remain the fallback. */
+/* Frames arrive every 10-20 ms; declare the signal stale after 500 ms without
+ * one. On timeout BrakeApplied() returns false so the hardwired brake switch
+ * and regen-based logic remain the fallback. */
 #define IBST_TIMEOUT_TICKS    5
 
 uint8_t IBooster::timeoutTicks = 0;
@@ -45,17 +51,41 @@ bool IBooster::brakeApplied = false;
 
 void IBooster::RegisterCanMessages(CanHardware* can)
 {
-    can->RegisterUserMessage(IBST_STATUS_ID);
+    switch (Param::GetInt(Param::iBooster))
+    {
+    case IBOOSTER_BOSCH:
+        can->RegisterUserMessage(IBST_BOSCH_ID);
+        break;
+    case IBOOSTER_TESLA:
+        can->RegisterUserMessage(IBST_TESLA_ID);
+        break;
+    default:
+        break;
+    }
 }
 
 void IBooster::DecodeCAN(uint32_t id, uint32_t data[2])
 {
-    if (id == IBST_STATUS_ID)
+    uint8_t* bytes = (uint8_t*)data;
+
+    switch (Param::GetInt(Param::iBooster))
     {
-        uint8_t* bytes = (uint8_t*)data;
-        uint8_t apply = bytes[DRIVER_BRAKE_BYTE] & DRIVER_BRAKE_MASK;
-        brakeApplied = (apply == DRIVER_BRAKE_APPLIED);
-        timeoutTicks = IBST_TIMEOUT_TICKS;
+    case IBOOSTER_BOSCH:
+        if (id == IBST_BOSCH_ID)
+        {
+            brakeApplied = (bytes[0] & 0x01) != 0;
+            timeoutTicks = IBST_TIMEOUT_TICKS;
+        }
+        break;
+    case IBOOSTER_TESLA:
+        if (id == IBST_TESLA_ID)
+        {
+            brakeApplied = (bytes[5] & 0x03) == 2;
+            timeoutTicks = IBST_TIMEOUT_TICKS;
+        }
+        break;
+    default:
+        break;
     }
 }
 
