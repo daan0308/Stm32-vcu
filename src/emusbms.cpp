@@ -358,9 +358,10 @@ void EmusBMS::Task100Ms()
          j1939TxCounter = 0;
          uint8_t j1939[8] = {0};
          // Report actual charger output: udc = DC bus voltage, idc = charge current.
-         // idc is positive when charging; clamp to 0 if the measurement reads negative.
+         // idc is negative while charging (positive = discharge, shunt convention);
+         // invert so the EMUS sees the delivered charge current as a positive value.
          uint16_t reportVoltage = (uint16_t)(Param::GetFloat(Param::udc) * 10.0f);
-         float    idcFloat      = Param::GetFloat(Param::idc);
+         float    idcFloat      = -Param::GetFloat(Param::idc);
          uint16_t reportCurrent = (idcFloat > 0.0f) ? (uint16_t)(idcFloat * 10.0f) : 0;
          j1939[0] = (reportVoltage >> 8) & 0xFF;
          j1939[1] =  reportVoltage       & 0xFF;
